@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taal — Tabla Beat Sequencer</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-deep: #0a0a0f;
+            --bg-surface: #12121a;
+            --bg-elevated: #1a1a26;
+            --bg-hover: #222233;
+            --accent-saffron: #ff6b2b;
+            --accent-gold: #d4a039;
+            --accent-warm: #e8935a;
+            --accent-copper: #b87333;
+            --text-primary: #f0ebe3;
+            --text-secondary: #8a8599;
+            --text-dim: #4a4660;
+            --beat-active: #ff6b2b;
+            --beat-glow: rgba(255, 107, 43, 0.3);
+            --playhead: #ff6b2b;
+            --border: rgba(255, 255, 255, 0.06);
+            --border-accent: rgba(212, 160, 57, 0.2);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background texture */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                    radial-gradient(ellipse at 20% 0%, rgba(255, 107, 43, 0.06) 0%, transparent 60%),
+                    radial-gradient(ellipse at 80% 100%, rgba(212, 160, 57, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .logo {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-saffron), var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-sub {
+            font-size: 13px;
+            font-weight: 300;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* Transport Controls */
+        .transport {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn {
+            border: none;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .btn-play {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-saffron), #e04e15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(255, 107, 43, 0.3);
+        }
+
+        .btn-play:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 28px rgba(255, 107, 43, 0.45);
+        }
+
+        .btn-play:active { transform: scale(0.96); }
+
+        .btn-play svg { fill: white; width: 22px; height: 22px; }
+
+        .btn-stop {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-stop:hover { background: var(--bg-hover); }
+        .btn-stop svg { fill: var(--text-secondary); width: 14px; height: 14px; }
+
+        .tempo-label {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .tempo-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-gold);
+            min-width: 32px;
+            text-align: center;
+        }
+
+        /* Transport slider controls */
+        .swing-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 14px;
+            height: 44px;
+            box-sizing: border-box;
+        }
+
+        .swing-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 80px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg-hover);
+            outline: none;
+        }
+
+        .swing-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--accent-copper);
+            cursor: pointer;
+        }
+
+        /* Beat numbers row */
+        .beat-numbers {
+            display: grid;
+            gap: 3px;
+            padding: 0 0 8px 0;
+            margin-bottom: 2px;
+            align-items: center;
+        }
+
+        .beat-numbers .spacer { }
+
+        .beat-num {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--text-dim);
+            letter-spacing: 0.5px;
+        }
+
+        .beat-num.downbeat { color: var(--accent-gold); }
+
+        /* Sequencer Grid */
+        .sequencer {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .sequencer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+            opacity: 0.3;
+        }
+
+        .track-row {
+            display: grid;
+            gap: 3px;
+            margin-bottom: 3px;
+            align-items: center;
+        }
+
+        .track-row:last-child { margin-bottom: 0; }
+
+        .track-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .track-label:hover { background: var(--bg-hover); }
+
+        .track-label .hindi {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-warm);
+            min-width: 24px;
+        }
+
+        .track-label .name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Grid cells */
+        .cell {
+            aspect-ratio: 1;
+            width: 100%;
+            max-width: 42px;
+            max-height: 42px;
+            justify-self: center;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.12s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell:hover {
+            border-color: rgba(255, 107, 43, 0.3);
+            background: var(--bg-hover);
+        }
+
+        .cell.active {
+            border-color: transparent;
+            box-shadow: 0 2px 12px var(--beat-glow);
+        }
+
+        .cell.active .cell-dot {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .cell-dot {
+            width: 60%;
+            height: 60%;
+            border-radius: 50%;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cell.downbeat {
+            background: rgba(212, 160, 57, 0.06);
+            border-color: rgba(212, 160, 57, 0.1);
+        }
+
+        /* Velocity colors */
+        .cell.active.vel-high { background: rgba(255, 107, 43, 0.2); }
+        .cell.active.vel-high .cell-dot { background: var(--accent-saffron); }
+
+        .cell.active.vel-med { background: rgba(232, 147, 90, 0.15); }
+        .cell.active.vel-med .cell-dot { background: var(--accent-warm); }
+
+        .cell.active.vel-low { background: rgba(184, 115, 51, 0.12); }
+        .cell.active.vel-low .cell-dot { background: var(--accent-copper); opacity: 0.7; }
+
+        /* Playhead */
+        .cell.playing {
+            box-shadow: 0 0 16px rgba(255, 107, 43, 0.5), inset 0 0 8px rgba(255, 107, 43, 0.15);
+            border-color: var(--accent-saffron) !important;
+        }
+
+        /* Playhead indicator */
+        .playhead-row {
+            display: grid;
+            gap: 3px;
+            margin-top: 6px;
+        }
+
+        .playhead-indicator {
+            height: 3px;
+            width: 100%;
+            max-width: 42px;
+            justify-self: center;
+            border-radius: 2px;
+            background: transparent;
+            transition: background 0.05s;
+        }
+
+        .playhead-indicator.active-head {
+            background: var(--accent-saffron);
+            box-shadow: 0 0 8px rgba(255, 107, 43, 0.6);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--border-accent);
+        }
+
+        .tool-btn.active {
+            background: rgba(255, 107, 43, 0.12);
+            border-color: rgba(255, 107, 43, 0.3);
+            color: var(--accent-saffron);
+        }
+
+        .velocity-selector {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+        }
+
+        .vel-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .vel-btn.sel-high {
+            color: var(--accent-saffron);
+        }
+        .vel-btn.sel-med {
+            color: var(--accent-warm);
+        }
+        .vel-btn.sel-low {
+            color: var(--accent-copper);
+        }
+
+        .vel-btn.selected {
+            border-color: currentColor;
+            background: rgba(255, 107, 43, 0.08);
+        }
+
+        /* Presets */
+        .presets {
+            margin-top: 24px;
+        }
+
+        .presets-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .preset-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--border-accent);
+            color: var(--accent-gold);
+            background: var(--bg-elevated);
+            transform: translateY(-1px);
+        }
+
+        .preset-btn.active-preset {
+            border-color: var(--accent-saffron);
+            color: var(--accent-saffron);
+            background: rgba(255, 107, 43, 0.08);
+        }
+
+        .preset-btn .hindi-small {
+            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-size: 12px;
+            margin-left: 4px;
+            color: var(--accent-copper);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .header { flex-direction: column; gap: 16px; align-items: flex-start; }
+            .transport { flex-wrap: wrap; }
+            .track-label .name { font-size: 10px; }
+            .cell { max-height: 36px; max-width: 36px; }
+            .playhead-indicator { max-width: 36px; }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .playing-anim {
+            animation: pulse 0.15s ease;
+        }
+
+        /* Track color coding (nth-child offset by 1 for beat-numbers row) */
+        .track-row:nth-child(2) .cell.active .cell-dot { background: #ff6b2b; }
+        .track-row:nth-child(3) .cell.active .cell-dot { background: #e8935a; }
+        .track-row:nth-child(4) .cell.active .cell-dot { background: #d4a039; }
+        .track-row:nth-child(5) .cell.active .cell-dot { background: #cc8844; }
+        .track-row:nth-child(6) .cell.active .cell-dot { background: #c47a50; }
+        .track-row:nth-child(7) .cell.active .cell-dot { background: #b87333; }
+        .track-row:nth-child(8) .cell.active .cell-dot { background: #cd7f5e; }
+        .track-row:nth-child(9) .cell.active .cell-dot { background: #e0a870; }
+        .track-row:nth-child(10) .cell.active .cell-dot { background: #c9956b; }
+        .track-row:nth-child(11) .cell.active .cell-dot { background: #d48a5a; }
+        .track-row:nth-child(12) .cell.active .cell-dot { background: #a67b5b; }
+
+        .track-row:nth-child(2) .cell.active { background: rgba(255,107,43,0.15); }
+        .track-row:nth-child(3) .cell.active { background: rgba(232,147,90,0.12); }
+        .track-row:nth-child(4) .cell.active { background: rgba(212,160,57,0.12); }
+        .track-row:nth-child(5) .cell.active { background: rgba(204,136,68,0.12); }
+        .track-row:nth-child(6) .cell.active { background: rgba(196,122,80,0.1); }
+        .track-row:nth-child(7) .cell.active { background: rgba(184,115,51,0.1); }
+        .track-row:nth-child(8) .cell.active { background: rgba(205,127,94,0.1); }
+        .track-row:nth-child(9) .cell.active { background: rgba(224,168,112,0.1); }
+        .track-row:nth-child(10) .cell.active { background: rgba(201,149,107,0.1); }
+        .track-row:nth-child(11) .cell.active { background: rgba(212,138,90,0.1); }
+        .track-row:nth-child(12) .cell.active { background: rgba(166,123,91,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header class="header">
+        <div class="logo-area">
+            <div class="logo">ताल</div>
+            <div class="logo-sub">Tabla Sequencer</div>
+        </div>
+        <div class="transport">
+            <button class="btn btn-play" id="playBtn" title="Play / Pause">
+                <svg id="playIcon" viewBox="0 0 24 24"><polygon points="6,3 20,12 6,21"/></svg>
+            </button>
+            <button class="btn btn-stop" id="stopBtn" title="Stop">
+                <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
+            </button>
+            <div class="swing-control">
+                <span class="tempo-label">BPM</span>
+                <input type="range" class="swing-slider" id="tempoSlider" min="40" max="240" value="120">
+                <span class="tempo-value" id="tempoDisplay">120</span>
+            </div>
+            <div class="swing-control">
+                <span class="tempo-label">Swing</span>
+                <input type="range" class="swing-slider" id="swingSlider" min="0" max="50" value="0">
+                <span class="tempo-value" id="swingDisplay">0</span>
+            </div>
+            <div class="swing-control">
+                <span class="tempo-label">Beats</span>
+                <span class="tempo-value" id="beatsValue">16</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="sequencer" id="sequencer"></div>
+
+    <div class="playhead-row" id="playheadRow">
+        <div></div>
+    </div>
+
+    <div class="toolbar">
+        <button class="tool-btn" id="clearBtn">Clear All</button>
+        <button class="tool-btn" id="randomBtn">Random</button>
+        <button class="tool-btn" id="copyBtn">Copy Pattern</button>
+        <div class="velocity-selector">
+            <button class="vel-btn sel-high selected" data-vel="high" id="velHigh">Hard</button>
+            <button class="vel-btn sel-med" data-vel="med" id="velMed">Med</button>
+            <button class="vel-btn sel-low" data-vel="low" id="velLow">Soft</button>
+        </div>
+    </div>
+
+    <div class="presets">
+        <div class="presets-title">Taal Presets</div>
+        <div class="preset-row">
+            <button class="preset-btn" data-preset="teental">Teental <span class="hindi-small">तीनताल · 16</span></button>
+            <button class="preset-btn" data-preset="jhaptal">Jhaptal <span class="hindi-small">झपताल · 10</span></button>
+            <button class="preset-btn" data-preset="rupak">Rupak <span class="hindi-small">रूपक · 7</span></button>
+            <button class="preset-btn" data-preset="dadra">Dadra <span class="hindi-small">दादरा · 6</span></button>
+            <button class="preset-btn" data-preset="keherwa">Keherwa <span class="hindi-small">कहरवा · 8</span></button>
+            <button class="preset-btn" data-preset="funky">Funky Tabla <span class="hindi-small">· 16</span></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ===== AUDIO ENGINE =====
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function ensureAudio() {
+        if (!audioCtx) {
+            audioCtx = new AudioCtx();
+            masterGain = null;
+            compressor = null;
+        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    // Tabla sound synthesis using Web Audio
+    // Helper: create a harmonic partial with envelope
+    function partial(freq, amp, decay, startTime) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(amp, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
+        osc.connect(gain);
+        osc.start(startTime);
+        osc.stop(startTime + decay + 0.01);
+        return gain;
+    }
+
+    // Helper: filtered noise burst for attack transient
+    function noiseBurst(filterType, filterFreq, filterQ, amp, decay, startTime) {
+        const bufLen = Math.floor(audioCtx.sampleRate * decay);
+        const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+        const d = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) {
+            d[i] = (Math.random() * 2 - 1);
+        }
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf;
+        const filt = audioCtx.createBiquadFilter();
+        filt.type = filterType;
+        filt.frequency.value = filterFreq;
+        filt.Q.value = filterQ;
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(amp, startTime);
+        env.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
+        src.connect(filt).connect(env);
+        src.start(startTime);
+        return env;
+    }
+
+    // Master output with limiter
+    let masterGain = null;
+    let compressor = null;
+    function getMaster() {
+        if (!masterGain) {
+            compressor = audioCtx.createDynamicsCompressor();
+            compressor.threshold.value = -12;
+            compressor.knee.value = 6;
+            compressor.ratio.value = 4;
+            compressor.attack.value = 0.003;
+            compressor.release.value = 0.1;
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.7;
+            compressor.connect(masterGain).connect(audioCtx.destination);
+        }
+        return compressor;
+    }
+
+    function playTablaSound(type, velocity = 1.0, stepDur = 0.125) {
+        ensureAudio();
+        const now = audioCtx.currentTime;
+        const v = velocity * 0.5;
+        const dest = getMaster();
+        // stepDur = duration of one 16th note in seconds (passed from caller)
+        // Compound bols use fractions of stepDur for sub-bol spacing
+
+        switch(type) {
+
+            // ============================================================
+            // NA / TA — Dayan, ring finger mutes, index strikes edge
+            // Fundamental suppressed (~270Hz muted). Prominent energy at
+            // ~550Hz, ~770Hz double peak, ~1000Hz. Short-medium sustain.
+            // Sharp attack transient. Damped resonance.
+            // ============================================================
+            case 'na': {
+                const click = noiseBurst('bandpass', 2800, 2, v * 0.5, 0.008, now);
+                click.connect(dest);
+                const p0 = partial(272, v * 0.06, 0.06, now);
+                p0.connect(dest);
+                const p1 = partial(545, v * 0.35, 0.18, now);
+                p1.connect(dest);
+                const p2a = partial(756, v * 0.45, 0.22, now);
+                p2a.connect(dest);
+                const p2b = partial(790, v * 0.35, 0.20, now);
+                p2b.connect(dest);
+                const p3 = partial(1000, v * 0.2, 0.12, now);
+                p3.connect(dest);
+                const p4 = partial(1260, v * 0.1, 0.08, now);
+                p4.connect(dest);
+                const p5 = partial(1530, v * 0.05, 0.06, now);
+                p5.connect(dest);
+                const skinNoise = noiseBurst('bandpass', 900, 1.5, v * 0.12, 0.04, now);
+                skinNoise.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // TIN / TEEN — Dayan, open resonant bell-like ring
+            // Fundamental ~300Hz, harmonics at ~550Hz, ~810Hz. Long sustain.
+            // ============================================================
+            case 'tin': {
+                const click = noiseBurst('highpass', 3000, 1, v * 0.25, 0.006, now);
+                click.connect(dest);
+                const p0 = partial(300, v * 0.45, 0.65, now);
+                p0.connect(dest);
+                const p1 = partial(548, v * 0.4, 0.50, now);
+                p1.connect(dest);
+                const p2 = partial(810, v * 0.3, 0.40, now);
+                p2.connect(dest);
+                const p3 = partial(1070, v * 0.12, 0.25, now);
+                p3.connect(dest);
+                const p4 = partial(1340, v * 0.06, 0.18, now);
+                p4.connect(dest);
+                const p5 = partial(1620, v * 0.03, 0.12, now);
+                p5.connect(dest);
+                const p6 = partial(1890, v * 0.015, 0.08, now);
+                p6.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // TUN — Dayan, all fingers strike center and release
+            // Fundamental ~272Hz, longest sustain. Harmonics at ~500,
+            // 748, 984, 1248Hz.
+            // ============================================================
+            case 'tun': {
+                const click = noiseBurst('lowpass', 800, 1, v * 0.2, 0.012, now);
+                click.connect(dest);
+                const p0 = partial(272, v * 0.55, 1.0, now);
+                p0.connect(dest);
+                const p1 = partial(500, v * 0.08, 0.3, now);
+                p1.connect(dest);
+                const p2 = partial(748, v * 0.15, 0.5, now);
+                p2.connect(dest);
+                const p3 = partial(984, v * 0.1, 0.35, now);
+                p3.connect(dest);
+                const p4 = partial(1248, v * 0.06, 0.25, now);
+                p4.connect(dest);
+                const body = partial(136, v * 0.08, 0.6, now);
+                body.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // GE / GHE — Bayan (bass drum), open stroke
+            // Deep bass ~100Hz with pitch bend, peaks at ~290Hz, ~450Hz.
+            // ============================================================
+            case 'ge': {
+                const thud = noiseBurst('lowpass', 250, 0.8, v * 0.45, 0.025, now);
+                thud.connect(dest);
+                const osc0 = audioCtx.createOscillator();
+                const g0 = audioCtx.createGain();
+                osc0.type = 'sine';
+                osc0.frequency.setValueAtTime(105, now);
+                osc0.frequency.exponentialRampToValueAtTime(85, now + 0.35);
+                g0.gain.setValueAtTime(v * 0.7, now);
+                g0.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+                osc0.connect(g0).connect(dest);
+                osc0.start(now);
+                osc0.stop(now + 0.5);
+                const sub = partial(52, v * 0.25, 0.35, now);
+                sub.connect(dest);
+                const p1 = partial(290, v * 0.15, 0.15, now);
+                p1.connect(dest);
+                const p2 = partial(450, v * 0.06, 0.08, now);
+                p2.connect(dest);
+                const memNoise = noiseBurst('lowpass', 180, 0.7, v * 0.15, 0.06, now);
+                memNoise.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // KE / KAT — Bayan, damped/closed stroke
+            // Diffuse spectrum, rapidly decaying. No clear pitch.
+            // ============================================================
+            case 'ke': {
+                const slap = noiseBurst('bandpass', 400, 1.2, v * 0.55, 0.03, now);
+                slap.connect(dest);
+                const click = noiseBurst('bandpass', 1200, 2, v * 0.3, 0.015, now);
+                click.connect(dest);
+                const osc0 = audioCtx.createOscillator();
+                const g0 = audioCtx.createGain();
+                osc0.type = 'sine';
+                osc0.frequency.setValueAtTime(150, now);
+                osc0.frequency.exponentialRampToValueAtTime(80, now + 0.025);
+                g0.gain.setValueAtTime(v * 0.3, now);
+                g0.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+                osc0.connect(g0).connect(dest);
+                osc0.start(now);
+                osc0.stop(now + 0.05);
+                const skin = noiseBurst('highpass', 600, 0.7, v * 0.15, 0.02, now);
+                skin.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // DHA — Both drums simultaneously: Ge (bayan) + Na (dayan)
+            // ============================================================
+            case 'dha': {
+                playTablaSound('ge', velocity * 0.75, stepDur);
+                playTablaSound('na', velocity * 0.85, stepDur);
+                break;
+            }
+
+            // ============================================================
+            // DHIN — Both drums simultaneously: Ge (bayan) + Tin (dayan)
+            // ============================================================
+            case 'dhin': {
+                playTablaSound('ge', velocity * 0.75, stepDur);
+                playTablaSound('tin', velocity * 0.85, stepDur);
+                break;
+            }
+
+            // ============================================================
+            // TIRAKITA — Rapid 4-stroke ornamental pattern: Ti-Ra-Ki-Ta
+            // Sub-bol gap scales with BPM: each sub-bol is spaced at
+            // 1/4 of the step duration, so 4 sub-bols fill one step.
+            // ============================================================
+            case 'tirakita': {
+                const gap = stepDur / 4; // 4 sub-bols evenly divide one step
+
+                // Ti (like tin but very brief — truncated decay)
+                const decayScale = Math.min(1, stepDur * 2); // scale decay at high BPM
+                const t1 = partial(300, v * 0.25, 0.08 * decayScale, now);
+                t1.connect(dest);
+                const t1b = partial(548, v * 0.15, 0.06 * decayScale, now);
+                t1b.connect(dest);
+                const t1c = noiseBurst('highpass', 2500, 1, v * 0.15, 0.005, now);
+                t1c.connect(dest);
+
+                // Ra (like na but lighter)
+                const r1 = partial(756, v * 0.2, 0.06 * decayScale, now + gap);
+                r1.connect(dest);
+                const r1b = partial(545, v * 0.15, 0.05 * decayScale, now + gap);
+                r1b.connect(dest);
+                const r1c = noiseBurst('bandpass', 2000, 2, v * 0.12, 0.005, now + gap);
+                r1c.connect(dest);
+
+                // Ki (like ke but lighter)
+                const k1 = noiseBurst('bandpass', 500, 1.5, v * 0.25, Math.min(0.025, gap * 0.7), now + gap * 2);
+                k1.connect(dest);
+                const k1b = noiseBurst('bandpass', 1500, 2, v * 0.12, Math.min(0.012, gap * 0.35), now + gap * 2);
+                k1b.connect(dest);
+
+                // Ta (like na but crisp)
+                const a1 = partial(756, v * 0.22, 0.07 * decayScale, now + gap * 3);
+                a1.connect(dest);
+                const a1b = partial(545, v * 0.15, 0.05 * decayScale, now + gap * 3);
+                a1b.connect(dest);
+                const a1c = noiseBurst('bandpass', 2800, 2, v * 0.12, 0.005, now + gap * 3);
+                a1c.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // TAK — Compound bol: Na (dayan) followed by Ke (bayan)
+            // Na strikes first, then Ke follows at half-step spacing.
+            // The Na gives the pitched ring, the Ke adds the bass slap.
+            // Together they create a sharp accent with both drums.
+            // Sub-bol gap scales with BPM.
+            // ============================================================
+            case 'tak': {
+                const gap = stepDur / 2; // Na then Ke, evenly splitting the step
+
+                // First: Na (dayan ring stroke)
+                // Attack click
+                const naClick = noiseBurst('bandpass', 2800, 2, v * 0.5, 0.008, now);
+                naClick.connect(dest);
+                // Suppressed fundamental
+                const naP0 = partial(272, v * 0.05, 0.05, now);
+                naP0.connect(dest);
+                // Dominant harmonics
+                const decayScale = Math.min(1, stepDur * 2);
+                const naP1 = partial(545, v * 0.3, 0.14 * decayScale, now);
+                naP1.connect(dest);
+                const naP2a = partial(756, v * 0.4, 0.16 * decayScale, now);
+                naP2a.connect(dest);
+                const naP2b = partial(790, v * 0.3, 0.14 * decayScale, now);
+                naP2b.connect(dest);
+                const naP3 = partial(1000, v * 0.18, 0.10 * decayScale, now);
+                naP3.connect(dest);
+                const naP4 = partial(1260, v * 0.08, 0.06 * decayScale, now);
+                naP4.connect(dest);
+                const naSkin = noiseBurst('bandpass', 900, 1.5, v * 0.1, 0.03, now);
+                naSkin.connect(dest);
+
+                // Second: Ke (bayan damped slap)
+                const keSlap = noiseBurst('bandpass', 400, 1.2, v * 0.45, Math.min(0.03, gap * 0.5), now + gap);
+                keSlap.connect(dest);
+                const keClick = noiseBurst('bandpass', 1200, 2, v * 0.25, Math.min(0.015, gap * 0.3), now + gap);
+                keClick.connect(dest);
+                const keOsc = audioCtx.createOscillator();
+                const keG = audioCtx.createGain();
+                keOsc.type = 'sine';
+                keOsc.frequency.setValueAtTime(150, now + gap);
+                keOsc.frequency.exponentialRampToValueAtTime(80, now + gap + 0.025);
+                keG.gain.setValueAtTime(v * 0.25, now + gap);
+                keG.gain.exponentialRampToValueAtTime(0.0001, now + gap + 0.04);
+                keOsc.connect(keG).connect(dest);
+                keOsc.start(now + gap);
+                keOsc.stop(now + gap + 0.05);
+                const keSkin = noiseBurst('highpass', 600, 0.7, v * 0.12, Math.min(0.02, gap * 0.3), now + gap);
+                keSkin.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // TETE (Ti-Ta) — Dayan, double damped stroke on syahi
+            // Two sub-bols evenly divide the step duration.
+            // ============================================================
+            case 'tete': {
+                const gap = stepDur / 2; // two taps evenly split the step
+                const decayScale = Math.min(1, stepDur * 2);
+
+                // TE (first stroke) — middle finger on syahi
+                const te1Click = noiseBurst('bandpass', 1800, 2.5, v * 0.4, Math.min(0.012, gap * 0.3), now);
+                te1Click.connect(dest);
+                const te1Pitch = partial(620, v * 0.12, 0.025 * decayScale, now);
+                te1Pitch.connect(dest);
+                const te1High = noiseBurst('bandpass', 3500, 2, v * 0.15, Math.min(0.008, gap * 0.2), now);
+                te1High.connect(dest);
+                const te1Skin = noiseBurst('lowpass', 500, 1, v * 0.08, Math.min(0.015, gap * 0.3), now);
+                te1Skin.connect(dest);
+
+                // TE (second stroke) — index finger on syahi
+                const te2Click = noiseBurst('bandpass', 1900, 2.5, v * 0.38, Math.min(0.012, gap * 0.3), now + gap);
+                te2Click.connect(dest);
+                const te2Pitch = partial(640, v * 0.11, 0.025 * decayScale, now + gap);
+                te2Pitch.connect(dest);
+                const te2High = noiseBurst('bandpass', 3600, 2, v * 0.14, Math.min(0.008, gap * 0.2), now + gap);
+                te2High.connect(dest);
+                const te2Skin = noiseBurst('lowpass', 500, 1, v * 0.07, Math.min(0.015, gap * 0.3), now + gap);
+                te2Skin.connect(dest);
+                break;
+            }
+
+            // ============================================================
+            // DHIRDHIR — Compound bol: two quick Dhin-like strokes
+            // Each "Dhir" = lighter Ge + Tin. Two sub-bols evenly
+            // divide the step. Gap scales with BPM.
+            // ============================================================
+            case 'dhirdhir': {
+                const gap = stepDur / 2; // two dhir strokes split the step
+                const decayScale = Math.min(1, stepDur * 2);
+
+                // First DHIR — lighter Ge + lighter Tin
+                const ge1 = audioCtx.createOscillator();
+                const ge1g = audioCtx.createGain();
+                ge1.type = 'sine';
+                ge1.frequency.setValueAtTime(100, now);
+                ge1.frequency.exponentialRampToValueAtTime(78, now + 0.18 * decayScale);
+                ge1g.gain.setValueAtTime(v * 0.35, now);
+                ge1g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2 * decayScale);
+                ge1.connect(ge1g).connect(dest);
+                ge1.start(now);
+                ge1.stop(now + 0.22 * decayScale + 0.01);
+                const sub1 = partial(50, v * 0.12, 0.15 * decayScale, now);
+                sub1.connect(dest);
+                const thud1 = noiseBurst('lowpass', 200, 0.8, v * 0.18, 0.02, now);
+                thud1.connect(dest);
+                const tin1a = partial(300, v * 0.2, 0.18 * decayScale, now);
+                tin1a.connect(dest);
+                const tin1b = partial(548, v * 0.15, 0.14 * decayScale, now);
+                tin1b.connect(dest);
+                const tin1c = partial(810, v * 0.08, 0.10 * decayScale, now);
+                tin1c.connect(dest);
+                const click1 = noiseBurst('highpass', 2500, 1, v * 0.12, 0.005, now);
+                click1.connect(dest);
+
+                // Second DHIR
+                const ge2 = audioCtx.createOscillator();
+                const ge2g = audioCtx.createGain();
+                ge2.type = 'sine';
+                ge2.frequency.setValueAtTime(98, now + gap);
+                ge2.frequency.exponentialRampToValueAtTime(76, now + gap + 0.18 * decayScale);
+                ge2g.gain.setValueAtTime(v * 0.32, now + gap);
+                ge2g.gain.exponentialRampToValueAtTime(0.0001, now + gap + 0.2 * decayScale);
+                ge2.connect(ge2g).connect(dest);
+                ge2.start(now + gap);
+                ge2.stop(now + gap + 0.22 * decayScale + 0.01);
+                const sub2 = partial(50, v * 0.1, 0.15 * decayScale, now + gap);
+                sub2.connect(dest);
+                const thud2 = noiseBurst('lowpass', 200, 0.8, v * 0.16, 0.02, now + gap);
+                thud2.connect(dest);
+                const tin2a = partial(300, v * 0.18, 0.18 * decayScale, now + gap);
+                tin2a.connect(dest);
+                const tin2b = partial(548, v * 0.14, 0.14 * decayScale, now + gap);
+                tin2b.connect(dest);
+                const tin2c = partial(810, v * 0.07, 0.10 * decayScale, now + gap);
+                tin2c.connect(dest);
+                const click2 = noiseBurst('highpass', 2500, 1, v * 0.11, 0.005, now + gap);
+                click2.connect(dest);
+                break;
+            }
+        }
+    }
+
+    // ===== SEQUENCER STATE =====
+    const TRACKS = [
+        { id: 'na', name: 'Na', hindi: 'ना', type: 'na' },
+        { id: 'tin', name: 'Tin', hindi: 'तिन', type: 'tin' },
+        { id: 'tun', name: 'Tun', hindi: 'तुन', type: 'tun' },
+        { id: 'tak', name: 'Tak', hindi: 'ताक', type: 'tak' },
+        { id: 'tete', name: 'TeTe', hindi: 'तेटे', type: 'tete' },
+        { id: 'ge', name: 'Ge', hindi: 'गे', type: 'ge' },
+        { id: 'ke', name: 'Ke', hindi: 'के', type: 'ke' },
+        { id: 'dha', name: 'Dha', hindi: 'धा', type: 'dha' },
+        { id: 'dhin', name: 'Dhin', hindi: 'धिन', type: 'dhin' },
+        { id: 'dhirdhir', name: 'DhirDhir', hindi: 'धिरधिर', type: 'dhirdhir' },
+        { id: 'tirakita', name: 'Trkta', hindi: 'तिरकिट', type: 'tirakita' },
+    ];
+
+    let steps = 16; // DYNAMIC step count
+    let grid = {};
+    let currentStep = -1;
+    let isPlaying = false;
+    let tempo = 120;
+    let swing = 0;
+    let currentVelocity = 'high';
+    let schedulerTimerId = null;
+
+    // Initialize grid
+    function initGrid(numSteps) {
+        TRACKS.forEach(t => {
+            grid[t.id] = new Array(numSteps).fill(null);
+        });
+    }
+
+    initGrid(steps);
+
+    // Helper: get CSS grid-template-columns for current step count
+    function gridCols() {
+        return `140px repeat(${steps}, 1fr)`;
+    }
+
+    // Downbeat positions vary per taal - we compute based on step groupings
+    // For most taals, we mark the first beat of each vibhag (section)
+    let downbeats = [0, 4, 8, 12]; // default for 16 (teental)
+
+    function getDefaultDownbeats(numSteps) {
+        // Sensible defaults based on common groupings
+        switch(numSteps) {
+            case 16: return [0, 4, 8, 12];     // Teental: 4+4+4+4
+            case 10: return [0, 2, 4, 6, 8];   // Jhaptal: 2+3+2+3 → mark every major division
+            case 7:  return [0, 3, 5];          // Rupak: 3+2+2
+            case 6:  return [0, 3];             // Dadra: 3+3
+            case 8:  return [0, 4];             // Keherwa: 4+4
+            default: {
+                const db = [];
+                for (let i = 0; i < numSteps; i += 4) db.push(i);
+                return db;
+            }
+        }
+    }
+
+    // ===== BUILD UI =====
+    function setStepCount(numSteps, newDownbeats) {
+        const wasPlaying = isPlaying;
+        if (wasPlaying) stopPlayback();
+
+        steps = numSteps;
+        downbeats = newDownbeats || getDefaultDownbeats(numSteps);
+
+        // Update beats display
+        document.getElementById('beatsValue').textContent = steps;
+
+        rebuildAll();
+
+        if (wasPlaying) startPlayback();
+    }
+
+    function rebuildAll() {
+        buildGrid();
+        buildPlayheadRow();
+    }
+
+    function buildGrid() {
+        const seq = document.getElementById('sequencer');
+        seq.innerHTML = '';
+
+        // Beat numbers as first row inside the sequencer
+        const beatRow = document.createElement('div');
+        beatRow.className = 'beat-numbers';
+        beatRow.style.gridTemplateColumns = gridCols();
+        const spacer = document.createElement('div');
+        spacer.className = 'spacer';
+        beatRow.appendChild(spacer);
+        for (let s = 0; s < steps; s++) {
+            const num = document.createElement('div');
+            num.className = `beat-num${downbeats.includes(s) ? ' downbeat' : ''}`;
+            num.textContent = s + 1;
+            beatRow.appendChild(num);
+        }
+        seq.appendChild(beatRow);
+
+        TRACKS.forEach((track, ti) => {
+            const row = document.createElement('div');
+            row.className = 'track-row';
+            row.style.gridTemplateColumns = gridCols();
+
+            const label = document.createElement('div');
+            label.className = 'track-label';
+            label.innerHTML = `
+      <span class="hindi">${track.hindi}</span>
+      <span class="name">${track.name}</span>
+    `;
+            label.addEventListener('click', () => {
+                ensureAudio();
+                const stepDur = (60 / tempo) / 4;
+                playTablaSound(track.type, 0.9, stepDur);
+            });
+            row.appendChild(label);
+
+            for (let s = 0; s < steps; s++) {
+                const cell = document.createElement('div');
+                const isDownbeat = downbeats.includes(s);
+                cell.className = `cell${isDownbeat ? ' downbeat' : ''}`;
+                cell.dataset.track = track.id;
+                cell.dataset.step = s;
+                cell.innerHTML = '<div class="cell-dot"></div>';
+
+                cell.addEventListener('mousedown', (e) => {
+                    if (e.button === 0) { // left click only
+                        e.preventDefault();
+                        startDrag(track.id, s, cell);
+                    }
+                });
+
+                cell.addEventListener('mouseover', (e) => {
+                    if (isDragging) {
+                        applyCell(track.id, s, cell);
+                    }
+                });
+
+                // Touch support
+                cell.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startDrag(track.id, s, cell);
+                }, { passive: false });
+
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    cycleVelocity(track.id, s, cell);
+                });
+
+                if (grid[track.id][s]) {
+                    cell.classList.add('active', `vel-${grid[track.id][s]}`);
+                }
+
+                row.appendChild(cell);
+            }
+
+            seq.appendChild(row);
+        });
+
+        // Touch move handler for drag painting on mobile
+        seq.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const el = document.elementFromPoint(touch.clientX, touch.clientY);
+            if (el) {
+                const target = el.closest('.cell');
+                if (target) {
+                    const trackId = target.dataset.track;
+                    const step = parseInt(target.dataset.step);
+                    if (trackId && !isNaN(step)) {
+                        applyCell(trackId, step, target);
+                    }
+                }
+            }
+        }, { passive: false });
+    }
+
+    function buildPlayheadRow() {
+        const row = document.getElementById('playheadRow');
+        row.innerHTML = '<div></div>';
+        row.style.gridTemplateColumns = gridCols();
+        for (let s = 0; s < steps; s++) {
+            const ind = document.createElement('div');
+            ind.className = 'playhead-indicator';
+            ind.dataset.step = s;
+            row.appendChild(ind);
+        }
+    }
+
+    // ===== INTERACTIONS =====
+    // Drag painting state
+    let isDragging = false;
+    let dragMode = null; // 'fill' or 'clear'
+
+    function applyCell(trackId, step, cellEl) {
+        if (dragMode === 'fill') {
+            if (!grid[trackId][step]) {
+                grid[trackId][step] = currentVelocity;
+                cellEl.classList.add('active', `vel-${currentVelocity}`);
+                ensureAudio();
+                const track = TRACKS.find(t => t.id === trackId);
+                const velMap = { high: 1.0, med: 0.6, low: 0.3 };
+                const stepDur = (60 / tempo) / 4;
+                playTablaSound(track.type, velMap[currentVelocity], stepDur);
+            }
+        } else if (dragMode === 'clear') {
+            if (grid[trackId][step]) {
+                grid[trackId][step] = null;
+                cellEl.classList.remove('active', 'vel-high', 'vel-med', 'vel-low');
+            }
+        }
+    }
+
+    function startDrag(trackId, step, cellEl) {
+        isDragging = true;
+        // If cell is active, we're erasing; if empty, we're filling
+        dragMode = grid[trackId][step] ? 'clear' : 'fill';
+        applyCell(trackId, step, cellEl);
+    }
+
+    function continueDrag(e) {
+        if (!isDragging) return;
+        // Get the element under the pointer (works for mouse; touch handled separately)
+        const target = e.target.closest('.cell');
+        if (!target) return;
+        const trackId = target.dataset.track;
+        const step = parseInt(target.dataset.step);
+        if (trackId && !isNaN(step)) {
+            applyCell(trackId, step, target);
+        }
+    }
+
+    function endDrag() {
+        isDragging = false;
+        dragMode = null;
+    }
+
+    // Global listeners for drag end
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('mouseleave', endDrag);
+    document.addEventListener('touchend', endDrag);
+    document.addEventListener('touchcancel', endDrag);
+
+    function toggleCell(trackId, step, cellEl) {
+        if (grid[trackId][step]) {
+            grid[trackId][step] = null;
+            cellEl.classList.remove('active', 'vel-high', 'vel-med', 'vel-low');
+        } else {
+            grid[trackId][step] = currentVelocity;
+            cellEl.classList.add('active', `vel-${currentVelocity}`);
+            ensureAudio();
+            const track = TRACKS.find(t => t.id === trackId);
+            const velMap = { high: 1.0, med: 0.6, low: 0.3 };
+            const stepDur = (60 / tempo) / 4;
+            playTablaSound(track.type, velMap[currentVelocity], stepDur);
+        }
+    }
+
+    function cycleVelocity(trackId, step, cellEl) {
+        const vels = ['high', 'med', 'low'];
+        const current = grid[trackId][step];
+        if (!current) {
+            grid[trackId][step] = 'high';
+            cellEl.classList.add('active', 'vel-high');
+        } else {
+            const idx = vels.indexOf(current);
+            const next = vels[(idx + 1) % 3];
+            cellEl.classList.remove(`vel-${current}`);
+            grid[trackId][step] = next;
+            cellEl.classList.add(`vel-${next}`);
+        }
+    }
+
+    // ===== PLAYBACK =====
+    function startPlayback() {
+        ensureAudio();
+        isPlaying = true;
+        currentStep = -1;
+        updatePlayButton();
+        scheduleNext();
+    }
+
+    function stopPlayback() {
+        isPlaying = false;
+        currentStep = -1;
+        clearTimeout(schedulerTimerId);
+        updatePlayButton();
+        clearPlayhead();
+    }
+
+    function scheduleNext() {
+        if (!isPlaying) return;
+
+        currentStep = (currentStep + 1) % steps;
+        const stepDuration = (60 / tempo) / 4 * 1000;
+
+        let delay = stepDuration;
+        if (currentStep % 2 === 1 && swing > 0) {
+            delay = stepDuration * (1 + swing / 100);
+        } else if (currentStep % 2 === 0 && swing > 0) {
+            delay = stepDuration * (1 - swing / 200);
+        }
+
+        playStep(currentStep);
+        updatePlayhead(currentStep);
+
+        schedulerTimerId = setTimeout(() => scheduleNext(), delay);
+    }
+
+    function playStep(step) {
+        const velMap = { high: 1.0, med: 0.6, low: 0.3 };
+        const stepDur = (60 / tempo) / 4;
+        TRACKS.forEach(track => {
+            const vel = grid[track.id][step];
+            if (vel) {
+                playTablaSound(track.type, velMap[vel], stepDur);
+            }
+        });
+    }
+
+    function updatePlayhead(step) {
+        document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+        document.querySelectorAll('.playhead-indicator.active-head').forEach(c => c.classList.remove('active-head'));
+        document.querySelectorAll(`.cell[data-step="${step}"]`).forEach(c => c.classList.add('playing'));
+        const phInd = document.querySelector(`.playhead-indicator[data-step="${step}"]`);
+        if (phInd) phInd.classList.add('active-head');
+    }
+
+    function clearPlayhead() {
+        document.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+        document.querySelectorAll('.playhead-indicator.active-head').forEach(c => c.classList.remove('active-head'));
+    }
+
+    function updatePlayButton() {
+        const icon = document.getElementById('playIcon');
+        if (isPlaying) {
+            icon.innerHTML = '<rect x="5" y="3" width="4" height="18" rx="1"/><rect x="15" y="3" width="4" height="18" rx="1"/>';
+        } else {
+            icon.innerHTML = '<polygon points="6,3 20,12 6,21"/>';
+        }
+    }
+
+    // ===== PRESETS =====
+    // Each preset now has a `steps` count, `downbeats` array, and pattern data
+    const PRESETS = {
+        teental: {
+            steps: 16,
+            downbeats: [0, 4, 8, 12], // Sam, Taali, Khali, Taali
+            pattern: {
+                dha:  ['high',null,null,null, 'high',null,null,null, null,null,null,null, 'high',null,null,null],
+                dhin: [null,null,'high',null, null,null,'high',null, null,null,null,null, null,null,'high',null],
+                tin:  [null,null,null,null, null,null,null,null, 'high',null,null,null, null,null,null,null],
+                na:   [null,'med',null,'med', null,'med',null,'med', null,'med','high','med', null,'med',null,'med'],
+                ke:   [null,null,null,null, null,null,null,null, 'med',null,null,null, null,null,null,null],
+                tete: [null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,'med'],
+            }
+        },
+        jhaptal: {
+            steps: 10,
+            downbeats: [0, 2, 5, 7], // Sam(2), Taali(3), Khali(2), Taali(3)
+            pattern: {
+                dhin: ['high',null, null,null,null, null,null, null,null,null],
+                dha:  [null,'high', null,null,null, null,null, 'high',null,null],
+                na:   [null,null, null,null,'med', null,'med', null,null,'med'],
+                tin:  [null,null, 'high',null,null, 'high',null, null,null,null],
+                tirakita: [null,null, null,'high',null, null,null, null,'high',null],
+            }
+        },
+        rupak: {
+            steps: 7,
+            downbeats: [0, 3, 5], // Khali(3), Taali(2), Taali(2)
+            pattern: {
+                tin:  ['high',null,null, null,null, null,null],
+                na:   [null,'med','med', null,null, null,null],
+                dhin: [null,null,null, 'high',null, 'high',null],
+                dha:  [null,null,null, null,'high', null,'high'],
+            }
+        },
+        dadra: {
+            steps: 6,
+            downbeats: [0, 3], // Sam(3), Taali(3)
+            pattern: {
+                dha:  ['high',null,null, null,null,null],
+                dhin: [null,'high',null, null,null,null],
+                na:   [null,null,'med', null,'high','med'],
+                tin:  [null,null,null, 'high',null,null],
+            }
+        },
+        keherwa: {
+            steps: 8,
+            downbeats: [0, 4], // Sam(4), Taali(4)
+            pattern: {
+                dha:  ['high',null,null,null, null,null,null,null],
+                ge:   [null,null,'med',null, null,null,'med',null],
+                na:   [null,null,null,'high', null,null,null,'med'],
+                tin:  [null,null,null,null, 'high',null,null,null],
+                tak:  [null,null,null,null, null,null,null,null],
+                ke:   [null,'low',null,null, null,'low',null,null],
+                tete: [null,null,null,null, null,null,null,null],
+            }
+        },
+        funky: {
+            steps: 16,
+            downbeats: [0, 4, 8, 12],
+            pattern: {
+                ge:   ['high',null,null,null, null,null,'high',null, 'high',null,null,null, null,null,null,'high'],
+                na:   [null,null,'high',null, null,null,null,null, null,null,'high',null, null,null,null,null],
+                tak:  [null,null,null,null, 'high',null,null,'med', null,null,null,null, 'high',null,'med',null],
+                tete: [null,'med',null,null, null,'med',null,null, null,'med',null,null, null,'med',null,null],
+                ke:   ['low',null,'low','low', 'low',null,'low','low', 'low',null,'low','low', 'low',null,'low','low'],
+                dha:  [null,null,null,'high', null,null,null,null, null,null,null,'high', null,null,null,null],
+                dhirdhir: [null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null],
+                tirakita: [null,null,null,null, null,null,null,null, null,null,null,null, 'high',null,null,null],
+            }
+        }
+    };
+
+    function loadPreset(name) {
+        const preset = PRESETS[name];
+        if (!preset) return;
+
+        // Update step count and downbeats
+        steps = preset.steps;
+        downbeats = preset.downbeats;
+
+        // Re-init grid with new step count
+        initGrid(steps);
+
+        // Load preset pattern
+        Object.keys(preset.pattern).forEach(trackId => {
+            if (grid[trackId]) {
+                grid[trackId] = [...preset.pattern[trackId]];
+            }
+        });
+
+        // Update beats display
+        document.getElementById('beatsValue').textContent = steps;
+
+        // Rebuild everything
+        rebuildAll();
+
+        // Highlight active preset
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active-preset'));
+        const activeBtn = document.querySelector(`.preset-btn[data-preset="${name}"]`);
+        if (activeBtn) activeBtn.classList.add('active-preset');
+    }
+
+    // ===== EVENT LISTENERS =====
+    document.getElementById('playBtn').addEventListener('click', () => {
+        if (isPlaying) stopPlayback();
+        else startPlayback();
+    });
+
+    document.getElementById('stopBtn').addEventListener('click', () => stopPlayback());
+
+    document.getElementById('tempoSlider').addEventListener('input', (e) => {
+        tempo = parseInt(e.target.value);
+        document.getElementById('tempoDisplay').textContent = tempo;
+    });
+
+    document.getElementById('swingSlider').addEventListener('input', (e) => {
+        swing = parseInt(e.target.value);
+        document.getElementById('swingDisplay').textContent = swing;
+    });
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+        initGrid(steps);
+        buildGrid();
+    });
+
+    document.getElementById('randomBtn').addEventListener('click', () => {
+        TRACKS.forEach(t => {
+            for (let s = 0; s < steps; s++) {
+                const r = Math.random();
+                if (r < 0.2) grid[t.id][s] = 'high';
+                else if (r < 0.3) grid[t.id][s] = 'med';
+                else if (r < 0.35) grid[t.id][s] = 'low';
+                else grid[t.id][s] = null;
+            }
+        });
+        buildGrid();
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+        let text = `Tabla Pattern (${steps} beats) @ ${tempo} BPM\n\n`;
+        TRACKS.forEach(t => {
+            const row = grid[t.id].map(v => v === 'high' ? '●' : v === 'med' ? '◐' : v === 'low' ? '○' : '·').join(' ');
+            text += `${t.hindi} ${t.name.padEnd(6)} │ ${row}\n`;
+        });
+        text += `\n● Hard  ◐ Med  ○ Soft  · Rest`;
+        navigator.clipboard.writeText(text).catch(() => {});
+
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Pattern', 1500);
+    });
+
+    // Velocity selector
+    document.querySelectorAll('.vel-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.vel-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            currentVelocity = btn.dataset.vel;
+        });
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => loadPreset(btn.dataset.preset));
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (isPlaying) stopPlayback();
+            else startPlayback();
+        }
+    });
+
+    // ===== INIT =====
+    rebuildAll();
+</script>
+
+</body>
+</html>
