@@ -388,39 +388,29 @@
             color: var(--accent-saffron);
         }
 
-        .velocity-selector {
+        .track-volume-control {
             display: flex;
-            gap: 4px;
-            margin-left: auto;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding-left: 8px;
+            border-left: 1px solid rgba(255, 255, 255, 0.04);
+            min-height: 36px;
         }
 
-        .vel-btn {
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            font-family: 'Outfit', sans-serif;
-            font-size: 11px;
-            font-weight: 600;
+        .track-volume-control input[type="range"] {
+            width: 52px;
+            accent-color: var(--accent-saffron);
             cursor: pointer;
-            transition: all 0.15s;
+        }
+
+        .track-volume-value {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .vel-btn.sel-high {
-            color: var(--accent-saffron);
-        }
-        .vel-btn.sel-med {
-            color: var(--accent-warm);
-        }
-        .vel-btn.sel-low {
-            color: var(--accent-copper);
-        }
-
-        .vel-btn.selected {
-            border-color: currentColor;
-            background: rgba(255, 107, 43, 0.08);
+            color: var(--text-dim);
         }
 
         /* Presets */
@@ -538,7 +528,7 @@
             </button>
             <div class="swing-control">
                 <span class="tempo-label">BPM</span>
-                <input type="range" class="swing-slider" id="tempoSlider" min="40" max="240" value="120">
+                <input type="range" class="swing-slider" id="tempoSlider" min="40" max="480" value="120">
                 <span class="tempo-value" id="tempoDisplay">120</span>
             </div>
             <div class="swing-control">
@@ -559,16 +549,12 @@
         <div></div>
     </div>
 
-    <div class="toolbar">
-        <button class="tool-btn" id="clearBtn">Clear All</button>
-        <button class="tool-btn" id="randomBtn">Random</button>
-        <button class="tool-btn" id="copyBtn">Copy Pattern</button>
-        <div class="velocity-selector">
-            <button class="vel-btn sel-high selected" data-vel="high" id="velHigh">Hard</button>
-            <button class="vel-btn sel-med" data-vel="med" id="velMed">Med</button>
-            <button class="vel-btn sel-low" data-vel="low" id="velLow">Soft</button>
+<div class="toolbar">
+            <button class="tool-btn" id="clearBtn">Clear All</button>
+            <button class="tool-btn" id="randomBtn">Random</button>
+            <button class="tool-btn" id="copyBtn">Copy Pattern</button>
+            <button class="tool-btn" id="importBtn">Import Pattern</button>
         </div>
-    </div>
 
     <div class="presets">
         <div class="presets-title">Taal Presets</div>
@@ -907,26 +893,39 @@
             case 'tete': {
                 const gap = stepDur / 2; // two taps evenly split the step
                 const decayScale = Math.min(1, stepDur * 2);
+                const scalar = 4.2;
 
-                // TE (first stroke) — middle finger on syahi
-                const te1Click = noiseBurst('bandpass', 1800, 2.5, v * 0.4, Math.min(0.012, gap * 0.3), now);
+                // TE (first stroke) — deeper, more resonant middle-finger hit
+                const te1Click = noiseBurst('bandpass', 1500, 2.5, v * 0.46 * scalar, Math.min(0.016, gap * 0.32), now);
                 te1Click.connect(dest);
-                const te1Pitch = partial(620, v * 0.12, 0.025 * decayScale, now);
+                const te1Low = partial(280, v * 0.16 * scalar, 0.12 * decayScale, now);
+                te1Low.connect(dest);
+                const te1Body = partial(420, v * 0.22 * scalar, 0.18 * decayScale, now);
+                te1Body.connect(dest);
+                const te1Pitch = partial(560, v * 0.18 * scalar, 0.09 * decayScale, now);
                 te1Pitch.connect(dest);
-                const te1High = noiseBurst('bandpass', 3500, 2, v * 0.15, Math.min(0.008, gap * 0.2), now);
+                const te1High = noiseBurst('bandpass', 3000, 2.1, v * 0.18 * scalar, Math.min(0.011, gap * 0.25), now);
                 te1High.connect(dest);
-                const te1Skin = noiseBurst('lowpass', 500, 1, v * 0.08, Math.min(0.015, gap * 0.3), now);
+                const te1Skin = noiseBurst('lowpass', 680, 1.2, v * 0.12 * scalar, Math.min(0.02, gap * 0.4), now);
                 te1Skin.connect(dest);
+                const te1Warm = noiseBurst('lowpass', 260, 0.9, v * 0.09 * scalar, Math.min(0.03, gap * 0.55), now);
+                te1Warm.connect(dest);
 
-                // TE (second stroke) — index finger on syahi
-                const te2Click = noiseBurst('bandpass', 1900, 2.5, v * 0.38, Math.min(0.012, gap * 0.3), now + gap);
+                // TE (second stroke) — fuller follow-up strike with a deeper tonal center
+                const te2Click = noiseBurst('bandpass', 1550, 2.5, v * 0.44 * scalar, Math.min(0.016, gap * 0.32), now + gap);
                 te2Click.connect(dest);
-                const te2Pitch = partial(640, v * 0.11, 0.025 * decayScale, now + gap);
+                const te2Low = partial(290, v * 0.15 * scalar, 0.12 * decayScale, now + gap);
+                te2Low.connect(dest);
+                const te2Body = partial(440, v * 0.2 * scalar, 0.18 * decayScale, now + gap);
+                te2Body.connect(dest);
+                const te2Pitch = partial(580, v * 0.17 * scalar, 0.09 * decayScale, now + gap);
                 te2Pitch.connect(dest);
-                const te2High = noiseBurst('bandpass', 3600, 2, v * 0.14, Math.min(0.008, gap * 0.2), now + gap);
+                const te2High = noiseBurst('bandpass', 3100, 2.1, v * 0.17 * scalar, Math.min(0.011, gap * 0.25), now + gap);
                 te2High.connect(dest);
-                const te2Skin = noiseBurst('lowpass', 500, 1, v * 0.07, Math.min(0.015, gap * 0.3), now + gap);
+                const te2Skin = noiseBurst('lowpass', 700, 1.2, v * 0.11 * scalar, Math.min(0.02, gap * 0.4), now + gap);
                 te2Skin.connect(dest);
+                const te2Warm = noiseBurst('lowpass', 270, 0.9, v * 0.08 * scalar, Math.min(0.03, gap * 0.55), now + gap);
+                te2Warm.connect(dest);
                 break;
             }
 
@@ -1014,11 +1013,32 @@
     let swing = 0;
     let currentVelocity = 'high';
     let schedulerTimerId = null;
+    const trackVolumes = {};
+
+    function getStepDurationSeconds() {
+        return 60 / tempo;
+    }
+
+    function getTrackVolume(trackId) {
+        if (trackVolumes[trackId] === undefined) trackVolumes[trackId] = 100;
+        return Number(trackVolumes[trackId]);
+    }
+
+    function getTrackVolumeMultiplier(trackId) {
+        const pct = Math.max(20, Math.min(140, getTrackVolume(trackId)));
+        return pct / 100;
+    }
+
+    function getVelocityValue(trackId, vel) {
+        const velMap = { high: 1.0, med: 0.6, low: 0.3 };
+        return (velMap[vel] || velMap.high) * getTrackVolumeMultiplier(trackId);
+    }
 
     // Initialize grid
     function initGrid(numSteps) {
         TRACKS.forEach(t => {
             grid[t.id] = new Array(numSteps).fill(null);
+            if (trackVolumes[t.id] === undefined) trackVolumes[t.id] = 100;
         });
     }
 
@@ -1026,7 +1046,7 @@
 
     // Helper: get CSS grid-template-columns for current step count
     function gridCols() {
-        return `140px repeat(${steps}, 1fr)`;
+        return `140px repeat(${steps}, minmax(18px, 1fr)) 70px`;
     }
 
     // Downbeat positions vary per taal - we compute based on step groupings
@@ -1087,6 +1107,9 @@
             num.textContent = s + 1;
             beatRow.appendChild(num);
         }
+        const beatSpacer = document.createElement('div');
+        beatSpacer.className = 'playhead-spacer';
+        beatRow.appendChild(beatSpacer);
         seq.appendChild(beatRow);
 
         TRACKS.forEach((track, ti) => {
@@ -1102,7 +1125,7 @@
     `;
             label.addEventListener('click', () => {
                 ensureAudio();
-                const stepDur = (60 / tempo) / 4;
+                const stepDur = getStepDurationSeconds();
                 playTablaSound(track.type, 0.9, stepDur);
             });
             row.appendChild(label);
@@ -1146,6 +1169,30 @@
                 row.appendChild(cell);
             }
 
+            const volumeWrap = document.createElement('div');
+            volumeWrap.className = 'track-volume-control';
+
+            const volumeSlider = document.createElement('input');
+            volumeSlider.type = 'range';
+            volumeSlider.min = '20';
+            volumeSlider.max = '140';
+            volumeSlider.value = String(getTrackVolume(track.id));
+            volumeSlider.title = `${track.name} volume`;
+            volumeSlider.setAttribute('aria-label', `${track.name} volume`);
+
+            const volumeValue = document.createElement('span');
+            volumeValue.className = 'track-volume-value';
+            volumeValue.textContent = `${getTrackVolume(track.id)}%`;
+
+            volumeSlider.addEventListener('input', (e) => {
+                const value = Number(e.target.value);
+                trackVolumes[track.id] = value;
+                volumeValue.textContent = `${value}%`;
+            });
+
+            volumeWrap.appendChild(volumeSlider);
+            volumeWrap.appendChild(volumeValue);
+            row.appendChild(volumeWrap);
             seq.appendChild(row);
         });
 
@@ -1178,6 +1225,9 @@
             ind.dataset.step = s;
             row.appendChild(ind);
         }
+        const spacer = document.createElement('div');
+        spacer.className = 'playhead-spacer';
+        row.appendChild(spacer);
     }
 
     // ===== INTERACTIONS =====
@@ -1192,9 +1242,8 @@
                 cellEl.classList.add('active', `vel-${currentVelocity}`);
                 ensureAudio();
                 const track = TRACKS.find(t => t.id === trackId);
-                const velMap = { high: 1.0, med: 0.6, low: 0.3 };
-                const stepDur = (60 / tempo) / 4;
-                playTablaSound(track.type, velMap[currentVelocity], stepDur);
+                const stepDur = getStepDurationSeconds();
+                playTablaSound(track.type, getVelocityValue(trackId, currentVelocity), stepDur);
             }
         } else if (dragMode === 'clear') {
             if (grid[trackId][step]) {
@@ -1243,9 +1292,8 @@
             cellEl.classList.add('active', `vel-${currentVelocity}`);
             ensureAudio();
             const track = TRACKS.find(t => t.id === trackId);
-            const velMap = { high: 1.0, med: 0.6, low: 0.3 };
-            const stepDur = (60 / tempo) / 4;
-            playTablaSound(track.type, velMap[currentVelocity], stepDur);
+            const stepDur = getStepDurationSeconds();
+            playTablaSound(track.type, getVelocityValue(trackId, currentVelocity), stepDur);
         }
     }
 
@@ -1285,7 +1333,7 @@
         if (!isPlaying) return;
 
         currentStep = (currentStep + 1) % steps;
-        const stepDuration = (60 / tempo) / 4 * 1000;
+        const stepDuration = getStepDurationSeconds() * 1000;
 
         let delay = stepDuration;
         if (currentStep % 2 === 1 && swing > 0) {
@@ -1301,12 +1349,11 @@
     }
 
     function playStep(step) {
-        const velMap = { high: 1.0, med: 0.6, low: 0.3 };
-        const stepDur = (60 / tempo) / 4;
+        const stepDur = getStepDurationSeconds();
         TRACKS.forEach(track => {
             const vel = grid[track.id][step];
             if (vel) {
-                playTablaSound(track.type, velMap[vel], stepDur);
+                playTablaSound(track.type, getVelocityValue(track.id, vel), stepDur);
             }
         });
     }
@@ -1334,7 +1381,7 @@
     }
 
     // ===== PRESETS =====
-    // Each preset now has a `steps` count, `downbeats` array, and pattern data
+    // Each preset now has a `steps` count, `downbeats` array, and pattern data, it works more now thatnkfully
     const PRESETS = {
         teental: {
             steps: 16,
@@ -1475,12 +1522,13 @@
     });
 
     document.getElementById('copyBtn').addEventListener('click', () => {
-        let text = `Tabla Pattern (${steps} beats) @ ${tempo} BPM\n\n`;
+        let text = `TABLA PATTERN v1\n`;
+        text += `BPM: ${tempo}\n`;
+        text += `BEATS: ${steps}\n`;
         TRACKS.forEach(t => {
-            const row = grid[t.id].map(v => v === 'high' ? '●' : v === 'med' ? '◐' : v === 'low' ? '○' : '·').join(' ');
-            text += `${t.hindi} ${t.name.padEnd(6)} │ ${row}\n`;
+            const row = grid[t.id].map(v => v || 'null').join(',');
+            text += `${t.id}:${row}\n`;
         });
-        text += `\n● Hard  ◐ Med  ○ Soft  · Rest`;
         navigator.clipboard.writeText(text).catch(() => {});
 
         const btn = document.getElementById('copyBtn');
@@ -1488,13 +1536,48 @@
         setTimeout(() => btn.textContent = 'Copy Pattern', 1500);
     });
 
-    // Velocity selector
-    document.querySelectorAll('.vel-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.vel-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            currentVelocity = btn.dataset.vel;
-        });
+    document.getElementById('importBtn').addEventListener('click', () => {
+        const text = prompt('Paste pattern data:');
+        if (!text) return;
+        try {
+            const lines = text.trim().split('\n');
+            if (lines[0] !== 'TABLA PATTERN v1') throw new Error('Invalid format');
+
+            let importedBpm = tempo;
+            let importedSteps = steps;
+            const trackData = {};
+
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('BPM:')) importedBpm = parseInt(line.split(':')[1].trim());
+                else if (line.startsWith('BEATS:')) importedSteps = parseInt(line.split(':')[1].trim());
+                else if (line.includes(':')) {
+                    const [trackId, values] = line.split(':');
+                    trackData[trackId.trim()] = values.split(',').map(v => v.trim() === 'null' ? null : v.trim());
+                }
+            }
+
+            if (importedSteps !== steps) {
+                setStepCount(importedSteps);
+            }
+            tempo = importedBpm;
+            document.getElementById('tempoSlider').value = tempo;
+            document.getElementById('tempoDisplay').textContent = tempo;
+
+            initGrid(steps);
+            Object.keys(trackData).forEach(trackId => {
+                if (grid[trackId] && trackData[trackId].length === steps) {
+                    grid[trackId] = trackData[trackId];
+                }
+            });
+            buildGrid();
+
+            const btn = document.getElementById('importBtn');
+            btn.textContent = 'Imported!';
+            setTimeout(() => btn.textContent = 'Import Pattern', 1500);
+        } catch (e) {
+            alert('Failed to import pattern: ' + e.message);
+        }
     });
 
     // Preset buttons
@@ -1511,7 +1594,7 @@
         }
     });
 
-    // ===== INIT =====
+    // Initialize it all
     rebuildAll();
 </script>
 
