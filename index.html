@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tabla Beat Sequencer</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
         :root {
             --bg-deep: #0a0a0f;
@@ -73,7 +73,7 @@
         }
 
         .logo {
-            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-family: 'Outfit', sans-serif;
             font-size: 32px;
             font-weight: 700;
             background: linear-gradient(135deg, var(--accent-saffron), var(--accent-gold));
@@ -252,14 +252,6 @@
 
         .track-label:hover { background: var(--bg-hover); }
 
-        .track-label .hindi {
-            font-family: 'Noto Sans Devanagari', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--accent-warm);
-            min-width: 24px;
-        }
-
         .track-label .name {
             font-size: 12px;
             font-weight: 500;
@@ -335,7 +327,8 @@
         .playhead-row {
             display: grid;
             gap: 3px;
-            margin-top: 6px;
+            /* Match the sequencer's 16px padding plus its 1px border. */
+            margin: 6px 17px 0;
         }
 
         .playhead-indicator {
@@ -386,6 +379,59 @@
             background: rgba(255, 107, 43, 0.12);
             border-color: rgba(255, 107, 43, 0.3);
             color: var(--accent-saffron);
+        }
+
+        .pattern-dialog {
+            width: min(640px, calc(100vw - 32px));
+            margin: auto;
+            padding: 0;
+            color: var(--text-primary);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-accent);
+            border-radius: 14px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+        }
+
+        .pattern-dialog::backdrop { background: rgba(5, 5, 10, 0.7); }
+
+        .pattern-dialog form { padding: 20px; }
+
+        .pattern-dialog h2 {
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+
+        .pattern-dialog p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 14px;
+        }
+
+        .pattern-dialog textarea {
+            width: 100%;
+            min-height: 270px;
+            resize: vertical;
+            padding: 12px;
+            color: var(--text-primary);
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        }
+
+        .pattern-dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .pattern-dialog-actions button { font-family: 'Outfit', sans-serif; }
+
+        .pattern-dialog-actions .primary {
+            color: #1a0d08;
+            background: var(--accent-saffron);
+            border-color: var(--accent-saffron);
         }
 
         .track-volume-control {
@@ -459,8 +505,7 @@
             background: rgba(255, 107, 43, 0.08);
         }
 
-        .preset-btn .hindi-small {
-            font-family: 'Noto Sans Devanagari', sans-serif;
+        .preset-btn .preset-meta {
             font-size: 12px;
             margin-left: 4px;
             color: var(--accent-copper);
@@ -516,7 +561,7 @@
 <div class="app">
     <header class="header">
         <div class="logo-area">
-            <div class="logo">ताल</div>
+            <div class="logo">TAAL</div>
             <div class="logo-sub">Tabla Sequencer</div>
         </div>
         <div class="transport">
@@ -559,14 +604,25 @@
     <div class="presets">
         <div class="presets-title">Taal Presets</div>
         <div class="preset-row">
-            <button class="preset-btn" data-preset="teental">Teental <span class="hindi-small">तीनताल · 16</span></button>
-            <button class="preset-btn" data-preset="jhaptal">Jhaptal <span class="hindi-small">झपताल · 10</span></button>
-            <button class="preset-btn" data-preset="rupak">Rupak <span class="hindi-small">रूपक · 7</span></button>
-            <button class="preset-btn" data-preset="dadra">Dadra <span class="hindi-small">दादरा · 6</span></button>
-            <button class="preset-btn" data-preset="keherwa">Keherwa <span class="hindi-small">कहरवा · 8</span></button>
-            <button class="preset-btn" data-preset="funky">Funky Tabla <span class="hindi-small">· 16</span></button>
+            <button class="preset-btn" data-preset="teental">Teental <span class="preset-meta">· 16</span></button>
+            <button class="preset-btn" data-preset="jhaptal">Jhaptal <span class="preset-meta">· 10</span></button>
+            <button class="preset-btn" data-preset="rupak">Rupak <span class="preset-meta">· 7</span></button>
+            <button class="preset-btn" data-preset="dadra">Dadra <span class="preset-meta">· 6</span></button>
+            <button class="preset-btn" data-preset="keherwa">Keherwa <span class="preset-meta">· 8</span></button>
         </div>
     </div>
+
+    <dialog class="pattern-dialog" id="importDialog" aria-labelledby="importDialogTitle">
+        <form method="dialog">
+            <h2 id="importDialogTitle">Import Pattern</h2>
+            <p>Paste the complete pattern data here.</p>
+            <textarea id="importPatternData" aria-label="Pattern data" spellcheck="false"></textarea>
+            <div class="pattern-dialog-actions">
+                <button class="tool-btn" value="cancel">Cancel</button>
+                <button class="tool-btn primary" value="import">Import Pattern</button>
+            </div>
+        </form>
+    </dialog>
 </div>
 
 <script>
@@ -583,59 +639,209 @@
         if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    // Tabla sound synthesis using Web Audio
-    // Helper: create a harmonic partial with envelope
-    function partial(freq, amp, decay, startTime) {
+    // Tabla sound synthesis using lightly detuned membrane modes and filtered attacks.
+    function partial(freq, amp, decay, startTime, options = {}) {
+        const {
+            attack = Math.min(0.002, decay * 0.2),
+            detune = 0.006,
+            startRatio = 1,
+            glide = Math.min(0.05, decay * 0.55),
+        } = options;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
+        const variedFreq = freq * (1 + (Math.random() * 2 - 1) * detune);
+        const peak = Math.max(0.0001, amp * (0.94 + Math.random() * 0.12));
+        const attackEnd = startTime + Math.max(0.0004, Math.min(attack, decay * 0.35));
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(amp, startTime);
+        osc.frequency.setValueAtTime(variedFreq * startRatio, startTime);
+        if (startRatio !== 1) {
+            osc.frequency.exponentialRampToValueAtTime(variedFreq, startTime + Math.max(0.004, glide));
+        }
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(peak, attackEnd);
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
         osc.connect(gain);
         osc.start(startTime);
-        osc.stop(startTime + decay + 0.01);
+        osc.stop(startTime + decay + 0.03);
         return gain;
     }
 
-    // Helper: filtered noise burst for attack transient
-    function noiseBurst(filterType, filterFreq, filterQ, amp, decay, startTime) {
-        const bufLen = Math.floor(audioCtx.sampleRate * decay);
+    function noiseBurst(filterType, filterFreq, filterQ, amp, decay, startTime, options = {}) {
+        const {
+            attack = Math.min(0.001, decay * 0.25),
+            frequencyEnd = filterFreq,
+            qEnd = filterQ,
+        } = options;
+        const bufLen = Math.max(1, Math.ceil(audioCtx.sampleRate * (decay + 0.005)));
         const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
         const d = buf.getChannelData(0);
         for (let i = 0; i < bufLen; i++) {
-            d[i] = (Math.random() * 2 - 1);
+            d[i] = (Math.random() * 2 - 1) * (0.95 + Math.random() * 0.1);
         }
         const src = audioCtx.createBufferSource();
         src.buffer = buf;
         const filt = audioCtx.createBiquadFilter();
         filt.type = filterType;
-        filt.frequency.value = filterFreq;
-        filt.Q.value = filterQ;
+        filt.frequency.setValueAtTime(filterFreq, startTime);
+        filt.Q.setValueAtTime(filterQ, startTime);
+        if (frequencyEnd !== filterFreq) {
+            filt.frequency.exponentialRampToValueAtTime(Math.max(1, frequencyEnd), startTime + decay);
+        }
+        if (qEnd !== filterQ) filt.Q.linearRampToValueAtTime(qEnd, startTime + decay);
         const env = audioCtx.createGain();
-        env.gain.setValueAtTime(amp, startTime);
+        const attackEnd = startTime + Math.max(0.0002, Math.min(attack, decay * 0.35));
+        env.gain.setValueAtTime(0.0001, startTime);
+        env.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp), attackEnd);
         env.gain.exponentialRampToValueAtTime(0.0001, startTime + decay);
         src.connect(filt).connect(env);
         src.start(startTime);
+        src.stop(startTime + decay + 0.01);
         return env;
     }
 
     // Master output with limiter
     let masterGain = null;
     let compressor = null;
+    let dryGain = null;
+    let room = null;
+    let roomGain = null;
+
+    function createRoomImpulse() {
+        const duration = 0.11;
+        const length = Math.ceil(audioCtx.sampleRate * duration);
+        const impulse = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+        const data = impulse.getChannelData(0);
+        for (let i = 0; i < length; i++) {
+            const envelope = Math.pow(1 - i / length, 5);
+            data[i] = (Math.random() * 2 - 1) * envelope * 0.13;
+        }
+        return impulse;
+    }
+
     function getMaster() {
         if (!masterGain) {
             compressor = audioCtx.createDynamicsCompressor();
-            compressor.threshold.value = -12;
-            compressor.knee.value = 6;
-            compressor.ratio.value = 4;
-            compressor.attack.value = 0.003;
-            compressor.release.value = 0.1;
+            compressor.threshold.value = -10;
+            compressor.knee.value = 10;
+            compressor.ratio.value = 3;
+            compressor.attack.value = 0.006;
+            compressor.release.value = 0.18;
             masterGain = audioCtx.createGain();
-            masterGain.gain.value = 0.7;
-            compressor.connect(masterGain).connect(audioCtx.destination);
+            masterGain.gain.value = 0.72;
+            dryGain = audioCtx.createGain();
+            dryGain.gain.value = 0.94;
+            room = audioCtx.createConvolver();
+            room.buffer = createRoomImpulse();
+            room.normalize = false;
+            roomGain = audioCtx.createGain();
+            roomGain.gain.value = 0.055;
+            compressor.connect(dryGain).connect(masterGain);
+            compressor.connect(room).connect(roomGain).connect(masterGain);
+            masterGain.connect(audioCtx.destination);
         }
         return compressor;
+    }
+
+    function addModes(dest, at, level, modes, options = {}) {
+        const { decayScale = 1, detune = 0.006 } = options;
+        modes.forEach(([frequency, amplitude, decay, startRatio = 1]) => {
+            const mode = partial(frequency, level * amplitude, decay * decayScale, at, {
+                detune,
+                startRatio,
+            });
+            mode.connect(dest);
+        });
+    }
+
+    function playNaAt(dest, at, level, options = {}) {
+        const { decayScale = 1, brightness = 1 } = options;
+        const click = noiseBurst('bandpass', 2900 * brightness, 1.6, level * 0.16, 0.006 * decayScale, at);
+        click.connect(dest);
+        const skin = noiseBurst('bandpass', 1050 * brightness, 1.1, level * 0.07, 0.038 * decayScale, at, {
+            frequencyEnd: 760 * brightness,
+        });
+        skin.connect(dest);
+        addModes(dest, at, level, [
+            [430, 0.12, 0.08],
+            [565, 0.27, 0.16],
+            [760, 0.23, 0.14],
+            [1005, 0.11, 0.09],
+            [1280, 0.05, 0.055],
+        ], { decayScale, detune: 0.01 });
+    }
+
+    function playTinAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        const click = noiseBurst('highpass', 3150, 0.8, level * 0.085, 0.005 * decayScale, at);
+        click.connect(dest);
+        const skin = noiseBurst('bandpass', 1750, 1.1, level * 0.035, 0.025 * decayScale, at, {
+            frequencyEnd: 1250,
+        });
+        skin.connect(dest);
+        addModes(dest, at, level, [
+            [292, 0.38, 0.68, 1.012],
+            [562, 0.29, 0.54, 1.008],
+            [842, 0.22, 0.43, 1.006],
+            [1128, 0.11, 0.27],
+            [1402, 0.055, 0.18],
+        ], { decayScale, detune: 0.004 });
+    }
+
+    function playTunAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        const touch = noiseBurst('lowpass', 1350, 0.7, level * 0.07, 0.01 * decayScale, at);
+        touch.connect(dest);
+        addModes(dest, at, level, [
+            [270, 0.42, 0.92, 1.008],
+            [505, 0.17, 0.58],
+            [748, 0.18, 0.5],
+            [990, 0.1, 0.34],
+            [1245, 0.045, 0.22],
+        ], { decayScale, detune: 0.004 });
+    }
+
+    function playGeAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        const thud = noiseBurst('lowpass', 430, 0.75, level * 0.18, 0.03 * decayScale, at, {
+            frequencyEnd: 180,
+        });
+        thud.connect(dest);
+        const skin = noiseBurst('bandpass', 230, 0.9, level * 0.09, 0.075 * decayScale, at, {
+            frequencyEnd: 145,
+        });
+        skin.connect(dest);
+        addModes(dest, at, level, [
+            [74, 0.52, 0.58, 1.52],
+            [112, 0.2, 0.38, 1.22],
+            [185, 0.09, 0.22],
+            [294, 0.05, 0.13],
+        ], { decayScale, detune: 0.016 });
+    }
+
+    function playKeAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        const slap = noiseBurst('bandpass', 520, 1.1, level * 0.2, 0.027 * decayScale, at, {
+            frequencyEnd: 260,
+        });
+        slap.connect(dest);
+        const click = noiseBurst('bandpass', 1550, 1.5, level * 0.065, 0.008 * decayScale, at);
+        click.connect(dest);
+        addModes(dest, at, level, [
+            [118, 0.19, 0.045, 1.34],
+            [205, 0.06, 0.03],
+        ], { decayScale, detune: 0.02 });
+    }
+
+    function playDhaAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        playGeAt(dest, at, level * 0.68, { decayScale: 0.78 * decayScale });
+        playNaAt(dest, at + 0.0012, level * 0.92, { decayScale: 0.9 * decayScale });
+    }
+
+    function playDhinAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        playGeAt(dest, at, level * 0.6, { decayScale: 0.78 * decayScale });
+        playTinAt(dest, at + 0.0008, level * 0.88, { decayScale: 0.86 * decayScale });
     }
 
     function playTablaSound(type, velocity = 1.0, stepDur = 0.125) {
@@ -655,24 +861,7 @@
             // Sharp attack transient. Damped resonance.
             // ============================================================
             case 'na': {
-                const click = noiseBurst('bandpass', 2800, 2, v * 0.5, 0.008, now);
-                click.connect(dest);
-                const p0 = partial(272, v * 0.06, 0.06, now);
-                p0.connect(dest);
-                const p1 = partial(545, v * 0.35, 0.18, now);
-                p1.connect(dest);
-                const p2a = partial(756, v * 0.45, 0.22, now);
-                p2a.connect(dest);
-                const p2b = partial(790, v * 0.35, 0.20, now);
-                p2b.connect(dest);
-                const p3 = partial(1000, v * 0.2, 0.12, now);
-                p3.connect(dest);
-                const p4 = partial(1260, v * 0.1, 0.08, now);
-                p4.connect(dest);
-                const p5 = partial(1530, v * 0.05, 0.06, now);
-                p5.connect(dest);
-                const skinNoise = noiseBurst('bandpass', 900, 1.5, v * 0.12, 0.04, now);
-                skinNoise.connect(dest);
+                playNaAt(dest, now, v);
                 break;
             }
 
@@ -681,22 +870,7 @@
             // Fundamental ~300Hz, harmonics at ~550Hz, ~810Hz. Long sustain.
             // ============================================================
             case 'tin': {
-                const click = noiseBurst('highpass', 3000, 1, v * 0.25, 0.006, now);
-                click.connect(dest);
-                const p0 = partial(300, v * 0.45, 0.65, now);
-                p0.connect(dest);
-                const p1 = partial(548, v * 0.4, 0.50, now);
-                p1.connect(dest);
-                const p2 = partial(810, v * 0.3, 0.40, now);
-                p2.connect(dest);
-                const p3 = partial(1070, v * 0.12, 0.25, now);
-                p3.connect(dest);
-                const p4 = partial(1340, v * 0.06, 0.18, now);
-                p4.connect(dest);
-                const p5 = partial(1620, v * 0.03, 0.12, now);
-                p5.connect(dest);
-                const p6 = partial(1890, v * 0.015, 0.08, now);
-                p6.connect(dest);
+                playTinAt(dest, now, v);
                 break;
             }
 
@@ -706,20 +880,7 @@
             // 748, 984, 1248Hz.
             // ============================================================
             case 'tun': {
-                const click = noiseBurst('lowpass', 800, 1, v * 0.2, 0.012, now);
-                click.connect(dest);
-                const p0 = partial(272, v * 0.55, 1.0, now);
-                p0.connect(dest);
-                const p1 = partial(500, v * 0.08, 0.3, now);
-                p1.connect(dest);
-                const p2 = partial(748, v * 0.15, 0.5, now);
-                p2.connect(dest);
-                const p3 = partial(984, v * 0.1, 0.35, now);
-                p3.connect(dest);
-                const p4 = partial(1248, v * 0.06, 0.25, now);
-                p4.connect(dest);
-                const body = partial(136, v * 0.08, 0.6, now);
-                body.connect(dest);
+                playTunAt(dest, now, v);
                 break;
             }
 
@@ -728,26 +889,7 @@
             // Deep bass ~100Hz with pitch bend, peaks at ~290Hz, ~450Hz.
             // ============================================================
             case 'ge': {
-                const thud = noiseBurst('lowpass', 250, 0.8, v * 0.45, 0.025, now);
-                thud.connect(dest);
-                const osc0 = audioCtx.createOscillator();
-                const g0 = audioCtx.createGain();
-                osc0.type = 'sine';
-                osc0.frequency.setValueAtTime(105, now);
-                osc0.frequency.exponentialRampToValueAtTime(85, now + 0.35);
-                g0.gain.setValueAtTime(v * 0.7, now);
-                g0.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
-                osc0.connect(g0).connect(dest);
-                osc0.start(now);
-                osc0.stop(now + 0.5);
-                const sub = partial(52, v * 0.25, 0.35, now);
-                sub.connect(dest);
-                const p1 = partial(290, v * 0.15, 0.15, now);
-                p1.connect(dest);
-                const p2 = partial(450, v * 0.06, 0.08, now);
-                p2.connect(dest);
-                const memNoise = noiseBurst('lowpass', 180, 0.7, v * 0.15, 0.06, now);
-                memNoise.connect(dest);
+                playGeAt(dest, now, v);
                 break;
             }
 
@@ -756,22 +898,7 @@
             // Diffuse spectrum, rapidly decaying. No clear pitch.
             // ============================================================
             case 'ke': {
-                const slap = noiseBurst('bandpass', 400, 1.2, v * 0.55, 0.03, now);
-                slap.connect(dest);
-                const click = noiseBurst('bandpass', 1200, 2, v * 0.3, 0.015, now);
-                click.connect(dest);
-                const osc0 = audioCtx.createOscillator();
-                const g0 = audioCtx.createGain();
-                osc0.type = 'sine';
-                osc0.frequency.setValueAtTime(150, now);
-                osc0.frequency.exponentialRampToValueAtTime(80, now + 0.025);
-                g0.gain.setValueAtTime(v * 0.3, now);
-                g0.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-                osc0.connect(g0).connect(dest);
-                osc0.start(now);
-                osc0.stop(now + 0.05);
-                const skin = noiseBurst('highpass', 600, 0.7, v * 0.15, 0.02, now);
-                skin.connect(dest);
+                playKeAt(dest, now, v);
                 break;
             }
 
@@ -779,8 +906,7 @@
             // DHA — Both drums simultaneously: Ge (bayan) + Na (dayan)
             // ============================================================
             case 'dha': {
-                playTablaSound('ge', velocity * 0.75, stepDur);
-                playTablaSound('na', velocity * 0.85, stepDur);
+                playDhaAt(dest, now, v);
                 break;
             }
 
@@ -788,8 +914,7 @@
             // DHIN — Both drums simultaneously: Ge (bayan) + Tin (dayan)
             // ============================================================
             case 'dhin': {
-                playTablaSound('ge', velocity * 0.75, stepDur);
-                playTablaSound('tin', velocity * 0.85, stepDur);
+                playDhinAt(dest, now, v);
                 break;
             }
 
@@ -799,90 +924,21 @@
             // 1/4 of the step duration, so 4 sub-bols fill one step.
             // ============================================================
             case 'tirakita': {
-                const gap = stepDur / 4; // 4 sub-bols evenly divide one step
-
-                // Ti (like tin but very brief — truncated decay)
-                const decayScale = Math.min(1, stepDur * 2); // scale decay at high BPM
-                const t1 = partial(300, v * 0.25, 0.08 * decayScale, now);
-                t1.connect(dest);
-                const t1b = partial(548, v * 0.15, 0.06 * decayScale, now);
-                t1b.connect(dest);
-                const t1c = noiseBurst('highpass', 2500, 1, v * 0.15, 0.005, now);
-                t1c.connect(dest);
-
-                // Ra (like na but lighter)
-                const r1 = partial(756, v * 0.2, 0.06 * decayScale, now + gap);
-                r1.connect(dest);
-                const r1b = partial(545, v * 0.15, 0.05 * decayScale, now + gap);
-                r1b.connect(dest);
-                const r1c = noiseBurst('bandpass', 2000, 2, v * 0.12, 0.005, now + gap);
-                r1c.connect(dest);
-
-                // Ki (like ke but lighter)
-                const k1 = noiseBurst('bandpass', 500, 1.5, v * 0.25, Math.min(0.025, gap * 0.7), now + gap * 2);
-                k1.connect(dest);
-                const k1b = noiseBurst('bandpass', 1500, 2, v * 0.12, Math.min(0.012, gap * 0.35), now + gap * 2);
-                k1b.connect(dest);
-
-                // Ta (like na but crisp)
-                const a1 = partial(756, v * 0.22, 0.07 * decayScale, now + gap * 3);
-                a1.connect(dest);
-                const a1b = partial(545, v * 0.15, 0.05 * decayScale, now + gap * 3);
-                a1b.connect(dest);
-                const a1c = noiseBurst('bandpass', 2800, 2, v * 0.12, 0.005, now + gap * 3);
-                a1c.connect(dest);
+                const gap = stepDur / 4;
+                playTinAt(dest, now, v * 0.42, { decayScale: 0.2 });
+                playNaAt(dest, now + gap, v * 0.48, { decayScale: 0.18, brightness: 1.08 });
+                playKeAt(dest, now + gap * 2, v * 0.42, { decayScale: 0.2 });
+                playNaAt(dest, now + gap * 3, v * 0.46, { decayScale: 0.18, brightness: 1.12 });
                 break;
             }
 
             // ============================================================
-            // TAK — Compound bol: Na (dayan) followed by Ke (bayan)
-            // Na strikes first, then Ke follows at half-step spacing.
-            // The Na gives the pitched ring, the Ke adds the bass slap.
-            // Together they create a sharp accent with both drums.
-            // Sub-bol gap scales with BPM.
+            // TAK — A compact Ta/Ke articulation, kept close enough to read as one bol.
             // ============================================================
             case 'tak': {
-                const gap = stepDur / 2; // Na then Ke, evenly splitting the step
-
-                // First: Na (dayan ring stroke)
-                // Attack click
-                const naClick = noiseBurst('bandpass', 2800, 2, v * 0.5, 0.008, now);
-                naClick.connect(dest);
-                // Suppressed fundamental
-                const naP0 = partial(272, v * 0.05, 0.05, now);
-                naP0.connect(dest);
-                // Dominant harmonics
-                const decayScale = Math.min(1, stepDur * 2);
-                const naP1 = partial(545, v * 0.3, 0.14 * decayScale, now);
-                naP1.connect(dest);
-                const naP2a = partial(756, v * 0.4, 0.16 * decayScale, now);
-                naP2a.connect(dest);
-                const naP2b = partial(790, v * 0.3, 0.14 * decayScale, now);
-                naP2b.connect(dest);
-                const naP3 = partial(1000, v * 0.18, 0.10 * decayScale, now);
-                naP3.connect(dest);
-                const naP4 = partial(1260, v * 0.08, 0.06 * decayScale, now);
-                naP4.connect(dest);
-                const naSkin = noiseBurst('bandpass', 900, 1.5, v * 0.1, 0.03, now);
-                naSkin.connect(dest);
-
-                // Second: Ke (bayan damped slap)
-                const keSlap = noiseBurst('bandpass', 400, 1.2, v * 0.45, Math.min(0.03, gap * 0.5), now + gap);
-                keSlap.connect(dest);
-                const keClick = noiseBurst('bandpass', 1200, 2, v * 0.25, Math.min(0.015, gap * 0.3), now + gap);
-                keClick.connect(dest);
-                const keOsc = audioCtx.createOscillator();
-                const keG = audioCtx.createGain();
-                keOsc.type = 'sine';
-                keOsc.frequency.setValueAtTime(150, now + gap);
-                keOsc.frequency.exponentialRampToValueAtTime(80, now + gap + 0.025);
-                keG.gain.setValueAtTime(v * 0.25, now + gap);
-                keG.gain.exponentialRampToValueAtTime(0.0001, now + gap + 0.04);
-                keOsc.connect(keG).connect(dest);
-                keOsc.start(now + gap);
-                keOsc.stop(now + gap + 0.05);
-                const keSkin = noiseBurst('highpass', 600, 0.7, v * 0.12, Math.min(0.02, gap * 0.3), now + gap);
-                keSkin.connect(dest);
+                const gap = Math.min(0.022, stepDur * 0.18);
+                playNaAt(dest, now, v * 0.72, { decayScale: 0.3, brightness: 1.12 });
+                playKeAt(dest, now + gap, v * 0.48, { decayScale: 0.32 });
                 break;
             }
 
@@ -891,41 +947,9 @@
             // Two sub-bols evenly divide the step duration.
             // ============================================================
             case 'tete': {
-                const gap = stepDur / 2; // two taps evenly split the step
-                const decayScale = Math.min(1, stepDur * 2);
-                const scalar = 4.2;
-
-                // TE (first stroke) — deeper, more resonant middle-finger hit
-                const te1Click = noiseBurst('bandpass', 1500, 2.5, v * 0.46 * scalar, Math.min(0.016, gap * 0.32), now);
-                te1Click.connect(dest);
-                const te1Low = partial(280, v * 0.16 * scalar, 0.12 * decayScale, now);
-                te1Low.connect(dest);
-                const te1Body = partial(420, v * 0.22 * scalar, 0.18 * decayScale, now);
-                te1Body.connect(dest);
-                const te1Pitch = partial(560, v * 0.18 * scalar, 0.09 * decayScale, now);
-                te1Pitch.connect(dest);
-                const te1High = noiseBurst('bandpass', 3000, 2.1, v * 0.18 * scalar, Math.min(0.011, gap * 0.25), now);
-                te1High.connect(dest);
-                const te1Skin = noiseBurst('lowpass', 680, 1.2, v * 0.12 * scalar, Math.min(0.02, gap * 0.4), now);
-                te1Skin.connect(dest);
-                const te1Warm = noiseBurst('lowpass', 260, 0.9, v * 0.09 * scalar, Math.min(0.03, gap * 0.55), now);
-                te1Warm.connect(dest);
-
-                // TE (second stroke) — fuller follow-up strike with a deeper tonal center
-                const te2Click = noiseBurst('bandpass', 1550, 2.5, v * 0.44 * scalar, Math.min(0.016, gap * 0.32), now + gap);
-                te2Click.connect(dest);
-                const te2Low = partial(290, v * 0.15 * scalar, 0.12 * decayScale, now + gap);
-                te2Low.connect(dest);
-                const te2Body = partial(440, v * 0.2 * scalar, 0.18 * decayScale, now + gap);
-                te2Body.connect(dest);
-                const te2Pitch = partial(580, v * 0.17 * scalar, 0.09 * decayScale, now + gap);
-                te2Pitch.connect(dest);
-                const te2High = noiseBurst('bandpass', 3100, 2.1, v * 0.17 * scalar, Math.min(0.011, gap * 0.25), now + gap);
-                te2High.connect(dest);
-                const te2Skin = noiseBurst('lowpass', 700, 1.2, v * 0.11 * scalar, Math.min(0.02, gap * 0.4), now + gap);
-                te2Skin.connect(dest);
-                const te2Warm = noiseBurst('lowpass', 270, 0.9, v * 0.08 * scalar, Math.min(0.03, gap * 0.55), now + gap);
-                te2Warm.connect(dest);
+                const gap = stepDur / 2;
+                playNaAt(dest, now, v * 0.48, { decayScale: 0.28, brightness: 1.04 });
+                playNaAt(dest, now + gap, v * 0.43, { decayScale: 0.24, brightness: 1.1 });
                 break;
             }
 
@@ -935,56 +959,9 @@
             // divide the step. Gap scales with BPM.
             // ============================================================
             case 'dhirdhir': {
-                const gap = stepDur / 2; // two dhir strokes split the step
-                const decayScale = Math.min(1, stepDur * 2);
-
-                // First DHIR — lighter Ge + lighter Tin
-                const ge1 = audioCtx.createOscillator();
-                const ge1g = audioCtx.createGain();
-                ge1.type = 'sine';
-                ge1.frequency.setValueAtTime(100, now);
-                ge1.frequency.exponentialRampToValueAtTime(78, now + 0.18 * decayScale);
-                ge1g.gain.setValueAtTime(v * 0.35, now);
-                ge1g.gain.exponentialRampToValueAtTime(0.0001, now + 0.2 * decayScale);
-                ge1.connect(ge1g).connect(dest);
-                ge1.start(now);
-                ge1.stop(now + 0.22 * decayScale + 0.01);
-                const sub1 = partial(50, v * 0.12, 0.15 * decayScale, now);
-                sub1.connect(dest);
-                const thud1 = noiseBurst('lowpass', 200, 0.8, v * 0.18, 0.02, now);
-                thud1.connect(dest);
-                const tin1a = partial(300, v * 0.2, 0.18 * decayScale, now);
-                tin1a.connect(dest);
-                const tin1b = partial(548, v * 0.15, 0.14 * decayScale, now);
-                tin1b.connect(dest);
-                const tin1c = partial(810, v * 0.08, 0.10 * decayScale, now);
-                tin1c.connect(dest);
-                const click1 = noiseBurst('highpass', 2500, 1, v * 0.12, 0.005, now);
-                click1.connect(dest);
-
-                // Second DHIR
-                const ge2 = audioCtx.createOscillator();
-                const ge2g = audioCtx.createGain();
-                ge2.type = 'sine';
-                ge2.frequency.setValueAtTime(98, now + gap);
-                ge2.frequency.exponentialRampToValueAtTime(76, now + gap + 0.18 * decayScale);
-                ge2g.gain.setValueAtTime(v * 0.32, now + gap);
-                ge2g.gain.exponentialRampToValueAtTime(0.0001, now + gap + 0.2 * decayScale);
-                ge2.connect(ge2g).connect(dest);
-                ge2.start(now + gap);
-                ge2.stop(now + gap + 0.22 * decayScale + 0.01);
-                const sub2 = partial(50, v * 0.1, 0.15 * decayScale, now + gap);
-                sub2.connect(dest);
-                const thud2 = noiseBurst('lowpass', 200, 0.8, v * 0.16, 0.02, now + gap);
-                thud2.connect(dest);
-                const tin2a = partial(300, v * 0.18, 0.18 * decayScale, now + gap);
-                tin2a.connect(dest);
-                const tin2b = partial(548, v * 0.14, 0.14 * decayScale, now + gap);
-                tin2b.connect(dest);
-                const tin2c = partial(810, v * 0.07, 0.10 * decayScale, now + gap);
-                tin2c.connect(dest);
-                const click2 = noiseBurst('highpass', 2500, 1, v * 0.11, 0.005, now + gap);
-                click2.connect(dest);
+                const gap = stepDur / 2;
+                playDhinAt(dest, now, v * 0.55, { decayScale: 0.38 });
+                playDhinAt(dest, now + gap, v * 0.48, { decayScale: 0.34 });
                 break;
             }
         }
@@ -992,17 +969,17 @@
 
     // ===== SEQUENCER STATE =====
     const TRACKS = [
-        { id: 'na', name: 'Na', hindi: 'ना', type: 'na' },
-        { id: 'tin', name: 'Tin', hindi: 'तिन', type: 'tin' },
-        { id: 'tun', name: 'Tun', hindi: 'तुन', type: 'tun' },
-        { id: 'tak', name: 'Tak', hindi: 'ताक', type: 'tak' },
-        { id: 'tete', name: 'TeTe', hindi: 'तेटे', type: 'tete' },
-        { id: 'ge', name: 'Ge', hindi: 'गे', type: 'ge' },
-        { id: 'ke', name: 'Ke', hindi: 'के', type: 'ke' },
-        { id: 'dha', name: 'Dha', hindi: 'धा', type: 'dha' },
-        { id: 'dhin', name: 'Dhin', hindi: 'धिन', type: 'dhin' },
-        { id: 'dhirdhir', name: 'DhirDhir', hindi: 'धिरधिर', type: 'dhirdhir' },
-        { id: 'tirakita', name: 'Trkta', hindi: 'तिरकिट', type: 'tirakita' },
+        { id: 'na', name: 'Na', type: 'na' },
+        { id: 'tin', name: 'Tin', type: 'tin' },
+        { id: 'tun', name: 'Tun', type: 'tun' },
+        { id: 'tak', name: 'Tak', type: 'tak' },
+        { id: 'tete', name: 'TeTe', type: 'tete' },
+        { id: 'ge', name: 'Ge', type: 'ge' },
+        { id: 'ke', name: 'Ke', type: 'ke' },
+        { id: 'dha', name: 'Dha', type: 'dha' },
+        { id: 'dhin', name: 'Dhin', type: 'dhin' },
+        { id: 'dhirdhir', name: 'DhirDhir', type: 'dhirdhir' },
+        { id: 'tirakita', name: 'Trkta', type: 'tirakita' },
     ];
 
     let steps = 16; // DYNAMIC step count
@@ -1057,7 +1034,7 @@
         // Sensible defaults based on common groupings
         switch(numSteps) {
             case 16: return [0, 4, 8, 12];     // Teental: 4+4+4+4
-            case 10: return [0, 2, 4, 6, 8];   // Jhaptal: 2+3+2+3 → mark every major division
+            case 10: return [0, 2, 5, 7];       // Jhaptal: 2+3+2+3
             case 7:  return [0, 3, 5];          // Rupak: 3+2+2
             case 6:  return [0, 3];             // Dadra: 3+3
             case 8:  return [0, 4];             // Keherwa: 4+4
@@ -1120,7 +1097,6 @@
             const label = document.createElement('div');
             label.className = 'track-label';
             label.innerHTML = `
-      <span class="hindi">${track.hindi}</span>
       <span class="name">${track.name}</span>
     `;
             label.addEventListener('click', () => {
@@ -1387,43 +1363,38 @@
             steps: 16,
             downbeats: [0, 4, 8, 12], // Sam, Taali, Khali, Taali
             pattern: {
-                dha:  ['high',null,null,null, 'high',null,null,null, null,null,null,null, 'high',null,null,null],
-                dhin: [null,null,'high',null, null,null,'high',null, null,null,null,null, null,null,'high',null],
-                tin:  [null,null,null,null, null,null,null,null, 'high',null,null,null, null,null,null,null],
-                na:   [null,'med',null,'med', null,'med',null,'med', null,'med','high','med', null,'med',null,'med'],
-                ke:   [null,null,null,null, null,null,null,null, 'med',null,null,null, null,null,null,null],
-                tete: [null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,'med'],
+                dha:  ['high',null,null,'high', 'high',null,null,'high', 'high',null,null,null, null,null,null,'high'],
+                dhin: [null,'high','high',null, null,'high','high',null, null,null,null,null, null,'high','high',null],
+                tin:  [null,null,null,null, null,null,null,null, null,'high','high',null, null,null,null,null],
+                na:   [null,null,null,null, null,null,null,null, null,null,null,'high', 'high',null,null,null],
             }
         },
         jhaptal: {
             steps: 10,
             downbeats: [0, 2, 5, 7], // Sam(2), Taali(3), Khali(2), Taali(3)
             pattern: {
-                dhin: ['high',null, null,null,null, null,null, null,null,null],
-                dha:  [null,'high', null,null,null, null,null, 'high',null,null],
-                na:   [null,null, null,null,'med', null,'med', null,null,'med'],
-                tin:  [null,null, 'high',null,null, 'high',null, null,null,null],
-                tirakita: [null,null, null,'high',null, null,null, null,'high',null],
+                dhin: ['high',null, 'high','high',null, null,null, 'high','high',null],
+                na:   [null,'high', null,null,'high', null,'high', null,null,'high'],
+                tin:  [null,null, null,null,null, 'high',null, null,null,null],
             }
         },
         rupak: {
             steps: 7,
             downbeats: [0, 3, 5], // Khali(3), Taali(2), Taali(2)
             pattern: {
-                tin:  ['high',null,null, null,null, null,null],
-                na:   [null,'med','med', null,null, null,null],
+                tin:  ['high','high',null, null,null, null,null],
+                na:   [null,null,'high', null,'high', null,'high'],
                 dhin: [null,null,null, 'high',null, 'high',null],
-                dha:  [null,null,null, null,'high', null,'high'],
             }
         },
         dadra: {
             steps: 6,
             downbeats: [0, 3], // Sam(3), Taali(3)
             pattern: {
-                dha:  ['high',null,null, null,null,null],
+                dha:  ['high',null,null, 'high',null,null],
                 dhin: [null,'high',null, null,null,null],
-                na:   [null,null,'med', null,'high','med'],
-                tin:  [null,null,null, 'high',null,null],
+                na:   [null,null,'high', null,null,'high'],
+                tin:  [null,null,null, null,'high',null],
             }
         },
         keherwa: {
@@ -1431,28 +1402,13 @@
             downbeats: [0, 4], // Sam(4), Taali(4)
             pattern: {
                 dha:  ['high',null,null,null, null,null,null,null],
-                ge:   [null,null,'med',null, null,null,'med',null],
-                na:   [null,null,null,'high', null,null,null,'med'],
-                tin:  [null,null,null,null, 'high',null,null,null],
-                tak:  [null,null,null,null, null,null,null,null],
-                ke:   [null,'low',null,null, null,'low',null,null],
-                tete: [null,null,null,null, null,null,null,null],
+                ge:   [null,'high',null,null, null,null,null,null],
+                na:   [null,null,'high',null, 'high',null,null,'high'],
+                tin:  [null,null,null,'high', null,null,null,null],
+                ke:   [null,null,null,null, null,'high',null,null],
+                dhin: [null,null,null,null, null,null,'high',null],
             }
         },
-        funky: {
-            steps: 16,
-            downbeats: [0, 4, 8, 12],
-            pattern: {
-                ge:   ['high',null,null,null, null,null,'high',null, 'high',null,null,null, null,null,null,'high'],
-                na:   [null,null,'high',null, null,null,null,null, null,null,'high',null, null,null,null,null],
-                tak:  [null,null,null,null, 'high',null,null,'med', null,null,null,null, 'high',null,'med',null],
-                tete: [null,'med',null,null, null,'med',null,null, null,'med',null,null, null,'med',null,null],
-                ke:   ['low',null,'low','low', 'low',null,'low','low', 'low',null,'low','low', 'low',null,'low','low'],
-                dha:  [null,null,null,'high', null,null,null,null, null,null,null,'high', null,null,null,null],
-                dhirdhir: [null,null,null,null, null,null,null,null, null,null,null,null, null,null,null,null],
-                tirakita: [null,null,null,null, null,null,null,null, null,null,null,null, 'high',null,null,null],
-            }
-        }
     };
 
     function loadPreset(name) {
@@ -1521,62 +1477,168 @@
         buildGrid();
     });
 
-    document.getElementById('copyBtn').addEventListener('click', () => {
-        let text = `TABLA PATTERN v1\n`;
-        text += `BPM: ${tempo}\n`;
-        text += `BEATS: ${steps}\n`;
-        TRACKS.forEach(t => {
-            const row = grid[t.id].map(v => v || 'null').join(',');
-            text += `${t.id}:${row}\n`;
-        });
-        navigator.clipboard.writeText(text).catch(() => {});
+    const PATTERN_V1 = 'TABLA PATTERN v1';
+    const PATTERN_V2 = 'TABLA PATTERN v2';
+    const VALID_VELOCITIES = new Set(['high', 'med', 'low']);
 
-        const btn = document.getElementById('copyBtn');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy Pattern', 1500);
+    function buildPatternText() {
+        const lines = [
+            PATTERN_V2,
+            `BPM: ${tempo}`,
+            `SWING: ${swing}`,
+            `BEATS: ${steps}`,
+            `DOWNBEATS: ${downbeats.join(',')}`,
+        ];
+        TRACKS.forEach(track => {
+            lines.push(`${track.id}: ${grid[track.id].map(value => value || 'null').join(',')}`);
+        });
+        return lines.join('\n');
+    }
+
+    async function copyPatternText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (_) {
+                // Fall through for browsers that deny the Clipboard API.
+            }
+        }
+
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.setAttribute('readonly', '');
+        textArea.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+        document.body.appendChild(textArea);
+        textArea.select();
+        textArea.setSelectionRange(0, text.length);
+        const copied = typeof document.execCommand === 'function' && document.execCommand('copy');
+        textArea.remove();
+        return copied;
+    }
+
+    function parsePatternText(text) {
+        const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+        if (![PATTERN_V1, PATTERN_V2].includes(lines[0])) throw new Error('Unsupported pattern format');
+
+        const isV2 = lines[0] === PATTERN_V2;
+        const pattern = {
+            bpm: tempo,
+            swing,
+            steps: null,
+            downbeats: null,
+            tracks: {},
+        };
+
+        for (const line of lines.slice(1)) {
+            const separator = line.indexOf(':');
+            if (separator === -1) continue;
+            const key = line.slice(0, separator).trim();
+            const value = line.slice(separator + 1).trim();
+            if (key === 'BPM') pattern.bpm = Number(value);
+            else if (key === 'SWING' && isV2) pattern.swing = Number(value);
+            else if (key === 'BEATS') pattern.steps = Number(value);
+            else if (key === 'DOWNBEATS' && isV2) {
+                pattern.downbeats = value ? value.split(',').map(item => Number(item.trim())) : [];
+            } else if (TRACKS.some(track => track.id === key)) {
+                pattern.tracks[key] = value.split(',').map(item => {
+                    const velocity = item.trim();
+                    if (velocity === 'null') return null;
+                    if (!VALID_VELOCITIES.has(velocity)) throw new Error(`Invalid velocity in ${key}`);
+                    return velocity;
+                });
+            }
+        }
+
+        if (!Number.isInteger(pattern.steps) || pattern.steps < 1 || pattern.steps > 64) {
+            throw new Error('BEATS must be a whole number from 1 to 64');
+        }
+        if (!Number.isInteger(pattern.bpm) || pattern.bpm < 40 || pattern.bpm > 480) {
+            throw new Error('BPM must be a whole number from 40 to 480');
+        }
+        if (!Number.isInteger(pattern.swing) || pattern.swing < 0 || pattern.swing > 50) {
+            throw new Error('SWING must be a whole number from 0 to 50');
+        }
+        if (Object.keys(pattern.tracks).length === 0) throw new Error('No track data found');
+
+        for (const [trackId, values] of Object.entries(pattern.tracks)) {
+            if (values.length !== pattern.steps) {
+                throw new Error(`${trackId} has ${values.length} beats; expected ${pattern.steps}`);
+            }
+        }
+
+        if (pattern.downbeats === null) pattern.downbeats = getDefaultDownbeats(pattern.steps);
+        const uniqueDownbeats = [...new Set(pattern.downbeats)];
+        if (!uniqueDownbeats.every(beat => Number.isInteger(beat) && beat >= 0 && beat < pattern.steps)) {
+            throw new Error('DOWNBEATS contains an invalid beat');
+        }
+        pattern.downbeats = uniqueDownbeats;
+        return pattern;
+    }
+
+    function updateButtonLabel(button, label) {
+        const originalLabel = button.dataset.label || button.textContent;
+        button.dataset.label = originalLabel;
+        button.textContent = label;
+        setTimeout(() => button.textContent = originalLabel, 1500);
+    }
+
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+        const text = buildPatternText();
+        const button = document.getElementById('copyBtn');
+        if (await copyPatternText(text)) {
+            updateButtonLabel(button, 'Copied!');
+        } else {
+            prompt('Copy this pattern data:', text);
+        }
     });
 
-    document.getElementById('importBtn').addEventListener('click', () => {
-        const text = prompt('Paste pattern data:');
-        if (!text) return;
+    function importPattern(text) {
         try {
-            const lines = text.trim().split('\n');
-            if (lines[0] !== 'TABLA PATTERN v1') throw new Error('Invalid format');
+            const pattern = parsePatternText(text);
+            const wasPlaying = isPlaying;
+            if (wasPlaying) stopPlayback();
 
-            let importedBpm = tempo;
-            let importedSteps = steps;
-            const trackData = {};
+            steps = pattern.steps;
+            downbeats = pattern.downbeats;
+            tempo = pattern.bpm;
+            swing = pattern.swing;
+            initGrid(steps);
+            Object.entries(pattern.tracks).forEach(([trackId, values]) => {
+                grid[trackId] = values;
+            });
 
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (line.startsWith('BPM:')) importedBpm = parseInt(line.split(':')[1].trim());
-                else if (line.startsWith('BEATS:')) importedSteps = parseInt(line.split(':')[1].trim());
-                else if (line.includes(':')) {
-                    const [trackId, values] = line.split(':');
-                    trackData[trackId.trim()] = values.split(',').map(v => v.trim() === 'null' ? null : v.trim());
-                }
-            }
-
-            if (importedSteps !== steps) {
-                setStepCount(importedSteps);
-            }
-            tempo = importedBpm;
+            document.getElementById('beatsValue').textContent = steps;
             document.getElementById('tempoSlider').value = tempo;
             document.getElementById('tempoDisplay').textContent = tempo;
+            document.getElementById('swingSlider').value = swing;
+            document.getElementById('swingDisplay').textContent = swing;
+            document.querySelectorAll('.preset-btn').forEach(button => button.classList.remove('active-preset'));
+            rebuildAll();
+            if (wasPlaying) startPlayback();
 
-            initGrid(steps);
-            Object.keys(trackData).forEach(trackId => {
-                if (grid[trackId] && trackData[trackId].length === steps) {
-                    grid[trackId] = trackData[trackId];
-                }
-            });
-            buildGrid();
-
-            const btn = document.getElementById('importBtn');
-            btn.textContent = 'Imported!';
-            setTimeout(() => btn.textContent = 'Import Pattern', 1500);
+            updateButtonLabel(document.getElementById('importBtn'), 'Imported!');
+            return true;
         } catch (e) {
             alert('Failed to import pattern: ' + e.message);
+            return false;
+        }
+    }
+
+    const importDialog = document.getElementById('importDialog');
+    const importPatternData = document.getElementById('importPatternData');
+
+    document.getElementById('importBtn').addEventListener('click', () => {
+        importPatternData.value = '';
+        importDialog.showModal();
+        importPatternData.focus();
+    });
+
+    importDialog.addEventListener('close', () => {
+        if (importDialog.returnValue !== 'import' || !importPatternData.value.trim()) return;
+        if (!importPattern(importPatternData.value)) {
+            importDialog.showModal();
+            importPatternData.focus();
         }
     });
 

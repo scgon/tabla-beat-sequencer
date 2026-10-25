@@ -23,7 +23,6 @@ The project is hosted on Cloudflare Pages:
   - Rupak
   - Dadra
   - Keherwa
-  - Funky Tabla
 - Clear a pattern or generate a random pattern.
 - Copy a pattern to the clipboard and import it again later.
 - Use the app directly in a modern browser without installing dependencies.
