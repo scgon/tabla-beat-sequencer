@@ -770,6 +770,11 @@
         ], { decayScale, detune: 0.01 });
     }
 
+    function playTeAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        playNaAt(dest, at, level, { decayScale: 0.26 * decayScale, brightness: 1.05 });
+    }
+
     function playTinAt(dest, at, level, options = {}) {
         const { decayScale = 1 } = options;
         const click = noiseBurst('highpass', 3150, 0.8, level * 0.085, 0.005 * decayScale, at);
@@ -961,6 +966,17 @@
             }
 
             // ============================================================
+            // KETE — Two articulated sounds: Ke-Te.
+            // Each stroke occupies half of the step so they remain distinct.
+            // ============================================================
+            case 'kete': {
+                const gap = stepDur / 2;
+                playKeAt(dest, now, v * 0.56, { decayScale: 0.34 });
+                playTeAt(dest, now + gap, v * 0.5, { decayScale: 0.3 });
+                break;
+            }
+
+            // ============================================================
             // TETE (Ti-Ta) — Dayan, double damped stroke on syahi
             // Two sub-bols evenly divide the step duration.
             // ============================================================
@@ -988,13 +1004,14 @@
         { id: 'tin', name: 'Tin', type: 'tin' },
         { id: 'tun', name: 'Tun', type: 'tun' },
         { id: 'tak', name: 'Tak', type: 'tak' },
+        { id: 'kete', name: 'Kete', type: 'kete' },
         { id: 'tete', name: 'TeTe', type: 'tete' },
         { id: 'ge', name: 'Ge', type: 'ge' },
         { id: 'ke', name: 'Ke', type: 'ke' },
         { id: 'dha', name: 'Dha', type: 'dha' },
         { id: 'dhin', name: 'Dhin', type: 'dhin' },
         { id: 'dhirdhir', name: 'DhirDhir', type: 'dhirdhir' },
-        { id: 'tirakita', name: 'Trkta', type: 'tirakita' },
+        { id: 'tirakita', name: 'Trkte', type: 'tirakita' },
     ];
 
     let steps = 16; // DYNAMIC step count
