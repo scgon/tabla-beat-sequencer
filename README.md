@@ -15,7 +15,6 @@ The project is hosted on Cloudflare Pages:
 - Play and stop patterns with a visual playhead.
 - Edit individual tabla strokes in the step sequencer.
 - Adjust tempo from 40 to 480 BPM.
-- Add swing from 0% to 50%.
 - Work with different cycle lengths, including 6, 7, 8, 10, and 16 beats.
 - Start from taal presets:
   - Teentaal (Teen Taal)
@@ -55,7 +54,7 @@ the most consistent browser behavior.
 
 1. Select a taal preset, or begin with the default pattern.
 2. Click cells in the sequencer grid to enable or disable tabla strokes.
-3. Set the tempo, swing, and cycle length using the controls at the top.
+3. Set the tempo and cycle length using the controls at the top.
 4. Press **Play** to hear the pattern and follow the active beat.
 5. Use **Copy Pattern** to save a pattern as text, then use **Import Pattern**
    to restore it.

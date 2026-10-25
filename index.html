@@ -155,7 +155,7 @@
         }
 
         /* Transport slider controls */
-        .swing-control {
+        .transport-control {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -167,7 +167,7 @@
             box-sizing: border-box;
         }
 
-        .swing-slider {
+        .transport-slider {
             -webkit-appearance: none;
             appearance: none;
             width: 80px;
@@ -177,7 +177,7 @@
             outline: none;
         }
 
-        .swing-slider::-webkit-slider-thumb {
+        .transport-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             width: 14px;
             height: 14px;
@@ -605,19 +605,14 @@
             <button class="btn btn-stop" id="stopBtn" title="Stop">
                 <svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>
             </button>
-            <div class="swing-control">
+            <div class="transport-control">
                 <span class="tempo-label">BPM</span>
-                <input type="range" class="swing-slider" id="tempoSlider" min="40" max="480" value="120">
+                <input type="range" class="transport-slider" id="tempoSlider" min="40" max="480" value="120">
                 <span class="tempo-value" id="tempoDisplay">120</span>
             </div>
-            <div class="swing-control">
-                <span class="tempo-label">Swing</span>
-                <input type="range" class="swing-slider" id="swingSlider" min="0" max="50" value="0">
-                <span class="tempo-value" id="swingDisplay">0</span>
-            </div>
-            <div class="swing-control">
+            <div class="transport-control">
                 <span class="tempo-label">Beats</span>
-                <input type="range" class="swing-slider" id="beatsSlider" min="1" max="64" step="1" value="16" aria-label="Number of beats">
+                <input type="range" class="transport-slider" id="beatsSlider" min="1" max="64" step="1" value="16" aria-label="Number of beats">
                 <span class="tempo-value" id="beatsValue">16</span>
             </div>
         </div>
@@ -1049,7 +1044,6 @@
     let currentStep = -1;
     let isPlaying = false;
     let tempo = 120;
-    let swing = 0;
     let currentVelocity = 'high';
     let schedulerTimerId = null;
     const trackVolumes = {};
@@ -1399,17 +1393,10 @@
         currentStep = (currentStep + 1) % steps;
         const stepDuration = getStepDurationSeconds() * 1000;
 
-        let delay = stepDuration;
-        if (currentStep % 2 === 1 && swing > 0) {
-            delay = stepDuration * (1 + swing / 100);
-        } else if (currentStep % 2 === 0 && swing > 0) {
-            delay = stepDuration * (1 - swing / 200);
-        }
-
         playStep(currentStep);
         updatePlayhead(currentStep);
 
-        schedulerTimerId = setTimeout(() => scheduleNext(), delay);
+        schedulerTimerId = setTimeout(() => scheduleNext(), stepDuration);
     }
 
     function playStep(step) {
@@ -1543,11 +1530,6 @@
         document.getElementById('tempoDisplay').textContent = tempo;
     });
 
-    document.getElementById('swingSlider').addEventListener('input', (e) => {
-        swing = parseInt(e.target.value);
-        document.getElementById('swingDisplay').textContent = swing;
-    });
-
     document.getElementById('beatsSlider').addEventListener('input', (e) => {
         setStepCount(parseInt(e.target.value));
         document.querySelectorAll('.preset-btn').forEach(button => button.classList.remove('active-preset'));
@@ -1579,7 +1561,6 @@
         const lines = [
             PATTERN_V2,
             `BPM: ${tempo}`,
-            `SWING: ${swing}`,
             `BEATS: ${steps}`,
             `DOWNBEATS: ${downbeats.join(',')}`,
         ];
@@ -1618,7 +1599,6 @@
         const isV2 = lines[0] === PATTERN_V2;
         const pattern = {
             bpm: tempo,
-            swing,
             steps: null,
             downbeats: null,
             tracks: {},
@@ -1630,7 +1610,6 @@
             const key = line.slice(0, separator).trim();
             const value = line.slice(separator + 1).trim();
             if (key === 'BPM') pattern.bpm = Number(value);
-            else if (key === 'SWING' && isV2) pattern.swing = Number(value);
             else if (key === 'BEATS') pattern.steps = Number(value);
             else if (key === 'DOWNBEATS' && isV2) {
                 pattern.downbeats = value ? value.split(',').map(item => Number(item.trim())) : [];
@@ -1649,9 +1628,6 @@
         }
         if (!Number.isInteger(pattern.bpm) || pattern.bpm < 40 || pattern.bpm > 480) {
             throw new Error('BPM must be a whole number from 40 to 480');
-        }
-        if (!Number.isInteger(pattern.swing) || pattern.swing < 0 || pattern.swing > 50) {
-            throw new Error('SWING must be a whole number from 0 to 50');
         }
         if (Object.keys(pattern.tracks).length === 0) throw new Error('No track data found');
 
@@ -1696,7 +1672,6 @@
             steps = pattern.steps;
             downbeats = pattern.downbeats;
             tempo = pattern.bpm;
-            swing = pattern.swing;
             initGrid(steps);
             Object.entries(pattern.tracks).forEach(([trackId, values]) => {
                 grid[trackId] = values;
@@ -1706,8 +1681,6 @@
             document.getElementById('beatsSlider').value = steps;
             document.getElementById('tempoSlider').value = tempo;
             document.getElementById('tempoDisplay').textContent = tempo;
-            document.getElementById('swingSlider').value = swing;
-            document.getElementById('swingDisplay').textContent = swing;
             document.querySelectorAll('.preset-btn').forEach(button => button.classList.remove('active-preset'));
             rebuildAll();
             if (wasPlaying) startPlayback();
