@@ -214,9 +214,46 @@
             border-radius: 16px;
             padding: 16px;
             position: relative;
-            overflow: hidden;
+            display: grid;
+            grid-template-columns: max-content minmax(0, 1fr) max-content;
+            width: fit-content;
+            max-width: 100%;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        .sequencer-scroll {
+            width: 100%;
+            border-radius: 16px;
+        }
+
+        .grid-pane {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .grid-center {
+            min-width: 0;
+            overflow-x: auto;
+        }
+
+        .grid-center-content {
+            width: max-content;
+        }
+
+        .grid-header-spacer {
+            flex: 0 0 auto;
+        }
+
+        .grid-labels .track-label,
+        .grid-volumes .track-volume-control {
+            height: 42px;
+        }
+
+        .grid-labels,
+        .grid-volumes {
+            gap: 0;
         }
 
         .sequencer::before {
@@ -327,8 +364,7 @@
         .playhead-row {
             display: grid;
             gap: 3px;
-            /* Match the sequencer's 16px padding plus its 1px border. */
-            margin: 6px 17px 0;
+            margin-top: 6px;
         }
 
         .playhead-indicator {
@@ -516,8 +552,6 @@
             .header { flex-direction: column; gap: 16px; align-items: flex-start; }
             .transport { flex-wrap: wrap; }
             .track-label .name { font-size: 10px; }
-            .cell { max-height: 36px; max-width: 36px; }
-            .playhead-indicator { max-width: 36px; }
         }
 
         /* Animations */
@@ -583,15 +617,14 @@
             </div>
             <div class="swing-control">
                 <span class="tempo-label">Beats</span>
+                <input type="range" class="swing-slider" id="beatsSlider" min="1" max="64" step="1" value="16" aria-label="Number of beats">
                 <span class="tempo-value" id="beatsValue">16</span>
             </div>
         </div>
     </header>
 
-    <div class="sequencer" id="sequencer"></div>
-
-    <div class="playhead-row" id="playheadRow">
-        <div></div>
+    <div class="sequencer-scroll">
+        <div class="sequencer" id="sequencer"></div>
     </div>
 
 <div class="toolbar">
@@ -858,12 +891,10 @@
         playNaAt(dest, at, level * 0.72, { decayScale: 0.32 * decayScale, brightness: 1.08 });
     }
 
-    function playDhirDhirAt(dest, at, level, stepDur) {
-        const gap = stepDur / 4;
+    function playDhirAt(dest, at, level, stepDur) {
+        const gap = stepDur / 2;
         playDhiAt(dest, at, level * 0.55, { decayScale: 0.38 });
         playRAt(dest, at + gap, level * 0.42, { decayScale: 0.3 });
-        playDhiAt(dest, at + gap * 2, level * 0.5, { decayScale: 0.36 });
-        playRAt(dest, at + gap * 3, level * 0.38, { decayScale: 0.28 });
     }
 
     function playTablaSound(type, velocity = 1.0, stepDur = 0.125) {
@@ -988,11 +1019,10 @@
             }
 
             // ============================================================
-            // DHIRDHIR — Four articulated sounds: Dhi-R-Dhi-R.
-            // The four strokes evenly divide the step and stay BPM-aware.
+            // DHIR — One articulated Dhi-R.
             // ============================================================
-            case 'dhirdhir': {
-                playDhirDhirAt(dest, now, v, stepDur);
+            case 'dhir': {
+                playDhirAt(dest, now, v, stepDur);
                 break;
             }
         }
@@ -1010,7 +1040,7 @@
         { id: 'ke', name: 'Ke', type: 'ke' },
         { id: 'dha', name: 'Dha', type: 'dha' },
         { id: 'dhin', name: 'Dhin', type: 'dhin' },
-        { id: 'dhirdhir', name: 'DhirDhir', type: 'dhirdhir' },
+        { id: 'dhir', name: 'Dhir', type: 'dhir' },
         { id: 'tirakita', name: 'Trkte', type: 'tirakita' },
     ];
 
@@ -1055,7 +1085,7 @@
 
     // Helper: get CSS grid-template-columns for current step count
     function gridCols() {
-        return `140px repeat(${steps}, minmax(18px, 1fr)) 70px`;
+        return `repeat(${steps}, 42px)`;
     }
 
     // Downbeat positions vary per taal - we compute based on step groupings
@@ -1083,11 +1113,18 @@
         const wasPlaying = isPlaying;
         if (wasPlaying) stopPlayback();
 
+        const previousGrid = grid;
         steps = numSteps;
         downbeats = newDownbeats || getDefaultDownbeats(numSteps);
 
+        TRACKS.forEach(track => {
+            const previousSteps = previousGrid[track.id] || [];
+            grid[track.id] = Array.from({ length: steps }, (_, index) => previousSteps[index] || null);
+        });
+
         // Update beats display
         document.getElementById('beatsValue').textContent = steps;
+        document.getElementById('beatsSlider').value = steps;
 
         rebuildAll();
 
@@ -1103,31 +1140,47 @@
         const seq = document.getElementById('sequencer');
         seq.innerHTML = '';
 
-        // Beat numbers as first row inside the sequencer
+        const labels = document.createElement('div');
+        labels.className = 'grid-pane grid-labels';
+
+        const center = document.createElement('div');
+        center.className = 'grid-pane grid-center';
+
+        const centerContent = document.createElement('div');
+        centerContent.className = 'grid-center-content';
+        centerContent.id = 'gridCenterContent';
+
+        const volumes = document.createElement('div');
+        volumes.className = 'grid-pane grid-volumes';
+
+        seq.appendChild(labels);
+        seq.appendChild(center);
+        seq.appendChild(volumes);
+
+        // Beat numbers as the first row in the center grid.
         const beatRow = document.createElement('div');
         beatRow.className = 'beat-numbers';
         beatRow.style.gridTemplateColumns = gridCols();
-        const spacer = document.createElement('div');
-        spacer.className = 'spacer';
-        beatRow.appendChild(spacer);
         for (let s = 0; s < steps; s++) {
             const num = document.createElement('div');
             num.className = `beat-num${downbeats.includes(s) ? ' downbeat' : ''}`;
             num.textContent = s + 1;
             beatRow.appendChild(num);
         }
-        const beatSpacer = document.createElement('div');
-        beatSpacer.className = 'playhead-spacer';
-        beatRow.appendChild(beatSpacer);
-        seq.appendChild(beatRow);
+        centerContent.appendChild(beatRow);
+        center.appendChild(centerContent);
 
-        TRACKS.forEach((track, ti) => {
-            const row = document.createElement('div');
-            row.className = 'track-row';
-            row.style.gridTemplateColumns = gridCols();
+        const headerHeight = beatRow.getBoundingClientRect().height;
+        [labels, volumes].forEach(pane => {
+            const spacer = document.createElement('div');
+            spacer.className = 'grid-header-spacer';
+            spacer.style.height = `${headerHeight + 2}px`;
+            pane.appendChild(spacer);
+        });
 
+        TRACKS.forEach(track => {
             const label = document.createElement('div');
-            label.className = 'track-label';
+            label.className = 'track-row track-label';
             label.innerHTML = `
       <span class="name">${track.name}</span>
     `;
@@ -1136,8 +1189,11 @@
                 const stepDur = getStepDurationSeconds();
                 playTablaSound(track.type, 0.9, stepDur);
             });
-            row.appendChild(label);
+            labels.appendChild(label);
 
+            const row = document.createElement('div');
+            row.className = 'track-row';
+            row.style.gridTemplateColumns = gridCols();
             for (let s = 0; s < steps; s++) {
                 const cell = document.createElement('div');
                 const isDownbeat = downbeats.includes(s);
@@ -1176,9 +1232,10 @@
 
                 row.appendChild(cell);
             }
+            centerContent.appendChild(row);
 
             const volumeWrap = document.createElement('div');
-            volumeWrap.className = 'track-volume-control';
+            volumeWrap.className = 'track-row track-volume-control';
 
             const volumeSlider = document.createElement('input');
             volumeSlider.type = 'range';
@@ -1200,8 +1257,7 @@
 
             volumeWrap.appendChild(volumeSlider);
             volumeWrap.appendChild(volumeValue);
-            row.appendChild(volumeWrap);
-            seq.appendChild(row);
+            volumes.appendChild(volumeWrap);
         });
 
         // Touch move handler for drag painting on mobile
@@ -1224,8 +1280,10 @@
     }
 
     function buildPlayheadRow() {
-        const row = document.getElementById('playheadRow');
-        row.innerHTML = '<div></div>';
+        const centerContent = document.getElementById('gridCenterContent');
+        const row = document.createElement('div');
+        row.id = 'playheadRow';
+        row.className = 'playhead-row';
         row.style.gridTemplateColumns = gridCols();
         for (let s = 0; s < steps; s++) {
             const ind = document.createElement('div');
@@ -1233,9 +1291,7 @@
             ind.dataset.step = s;
             row.appendChild(ind);
         }
-        const spacer = document.createElement('div');
-        spacer.className = 'playhead-spacer';
-        row.appendChild(spacer);
+        centerContent.appendChild(row);
     }
 
     // ===== INTERACTIONS =====
@@ -1463,6 +1519,7 @@
 
         // Update beats display
         document.getElementById('beatsValue').textContent = steps;
+        document.getElementById('beatsSlider').value = steps;
 
         // Rebuild everything
         rebuildAll();
@@ -1489,6 +1546,11 @@
     document.getElementById('swingSlider').addEventListener('input', (e) => {
         swing = parseInt(e.target.value);
         document.getElementById('swingDisplay').textContent = swing;
+    });
+
+    document.getElementById('beatsSlider').addEventListener('input', (e) => {
+        setStepCount(parseInt(e.target.value));
+        document.querySelectorAll('.preset-btn').forEach(button => button.classList.remove('active-preset'));
     });
 
     document.getElementById('clearBtn').addEventListener('click', () => {
@@ -1641,6 +1703,7 @@
             });
 
             document.getElementById('beatsValue').textContent = steps;
+            document.getElementById('beatsSlider').value = steps;
             document.getElementById('tempoSlider').value = tempo;
             document.getElementById('tempoDisplay').textContent = tempo;
             document.getElementById('swingSlider').value = swing;
