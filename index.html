@@ -950,10 +950,11 @@
             }
 
             // ============================================================
-            // TAK — A compact Ta/Ke articulation, kept close enough to read as one bol.
+            // TAK — Two articulated sounds: Ta-K.
+            // Each stroke occupies half of the step so they remain distinct.
             // ============================================================
             case 'tak': {
-                const gap = Math.min(0.022, stepDur * 0.18);
+                const gap = stepDur / 2;
                 playNaAt(dest, now, v * 0.72, { decayScale: 0.3, brightness: 1.12 });
                 playKeAt(dest, now + gap, v * 0.48, { decayScale: 0.32 });
                 break;
