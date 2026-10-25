@@ -844,6 +844,23 @@
         playTinAt(dest, at + 0.0008, level * 0.88, { decayScale: 0.86 * decayScale });
     }
 
+    function playDhiAt(dest, at, level, options = {}) {
+        playDhinAt(dest, at, level, options);
+    }
+
+    function playRAt(dest, at, level, options = {}) {
+        const { decayScale = 1 } = options;
+        playNaAt(dest, at, level * 0.72, { decayScale: 0.32 * decayScale, brightness: 1.08 });
+    }
+
+    function playDhirDhirAt(dest, at, level, stepDur) {
+        const gap = stepDur / 4;
+        playDhiAt(dest, at, level * 0.55, { decayScale: 0.38 });
+        playRAt(dest, at + gap, level * 0.42, { decayScale: 0.3 });
+        playDhiAt(dest, at + gap * 2, level * 0.5, { decayScale: 0.36 });
+        playRAt(dest, at + gap * 3, level * 0.38, { decayScale: 0.28 });
+    }
+
     function playTablaSound(type, velocity = 1.0, stepDur = 0.125) {
         ensureAudio();
         const now = audioCtx.currentTime;
@@ -954,14 +971,11 @@
             }
 
             // ============================================================
-            // DHIRDHIR — Compound bol: two quick Dhin-like strokes
-            // Each "Dhir" = lighter Ge + Tin. Two sub-bols evenly
-            // divide the step. Gap scales with BPM.
+            // DHIRDHIR — Four articulated sounds: Dhi-R-Dhi-R.
+            // The four strokes evenly divide the step and stay BPM-aware.
             // ============================================================
             case 'dhirdhir': {
-                const gap = stepDur / 2;
-                playDhinAt(dest, now, v * 0.55, { decayScale: 0.38 });
-                playDhinAt(dest, now + gap, v * 0.48, { decayScale: 0.34 });
+                playDhirDhirAt(dest, now, v, stepDur);
                 break;
             }
         }
